@@ -6,7 +6,7 @@
     padding: 10px;
 }
 
-.profile-content {
+.profile {
     display: flex;
     flex-direction: column;
     gap: 8px;
@@ -18,23 +18,19 @@
     padding: 10px;
 }
 
-.profile-image {
-    height: 120px;
-}
-
-.profile-info {
+.profile-card_info {
     display: flex;
     flex-direction: column;
     gap: 5px;
     flex: 1;
 }
 
-.member-since,
-.edit-profile-btn{
+.profile-card_since,
+.profile-card_edit{
     margin-top: 5px;
 }
 
-.profile-image{
+.profile-card_image{
     width: 120px;
     height: 120px;
 }
@@ -45,7 +41,7 @@
     padding: 10px;
 }
 
-.menu-item{
+.profile-menu_item{
     flex: 1;
     text-align: center;
     font-size: 12px;

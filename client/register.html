@@ -4,26 +4,51 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Register</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/auth.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" integrity="sha384-tViUnnbYAV00FLIhhi3v/dWt3Jxw4gZQcNoSCxCIFNJVCx7/D55/wXsrNIRANwdD" crossorigin="anonymous">
 </head>
 <body>
-    <div class="register-page">
-        <div class="header">
-            <div class="logo"></div>
-        </div>
+    <main class="auth-page">
 
-        <div class="register-form">
-            <div class="username-field"></div>
-            <div class="email-field"></div>
-            <div class="password-field"></div>
-            <div class="confirm-password-field"></div>
-            <div class="register-button"></div>
+        <header class="header">
+            <div class="header_logo">logo</div>
+        </header>
 
-            <div class="login-link">Already have an account? Log in</div>
-        </div>
+        <section class="auth">
 
-        <div class="footer">
-            <div class="footer-logo"></div>
-            <div class="footer-content">© 2026 Sunnify. All rights reserved.</div>
-        </div>
+            <h1 class="auth_title">Create account</h1>
+
+            <form class="auth-form">
+                
+            <div class="auth-form_group">
+                <label for="reg-username">Username</label>
+                <input id="reg-username" type="text" class="auth-form_input">
+            </div>
+
+            <div class="auth-form_group">
+                <label for="email">Email</label>
+                <input id="email" type="email" class="auth-form_input">
+            </div>
+
+            <div class="auth-form_group">
+                <label for="reg-password">Password</label>
+                <input id="reg-password" type="password" class="auth-form_input">
+            </div>
+
+            <div class="auth-form_group">
+                <label for="confirm-password">Confirm Password</label>
+                <input id="confirm-password" type="password" class="auth-form_input">
+            </div>
+
+            <button class="auth-form_submit">Register</button>
+            </form>
+            <div class="auth_switch">Already have an account? <a href="login.html">Log in</a></div>
+        </section>
+        <footer class="footer">
+            <div class="footer_logo"></div>
+            <div class="footer_content">© 2026 Sunnify. All rights reserved.</div>
+        </footer>
 </body>
 </html>
