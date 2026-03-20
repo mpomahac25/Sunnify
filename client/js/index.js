@@ -1,1 +1,0 @@
-const BACKEND_ROOT_URL = "terve"
