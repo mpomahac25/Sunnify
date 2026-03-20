@@ -39,6 +39,11 @@
     height: 35px;
 }
 
+.auth-form_input_invalid {
+    border: 2px solid red;
+    box-shadow: 0 0 0 1000px #ffcccc inset;
+}
+
 .auth-form_submit {
     height: 40px;
 }
@@ -46,4 +51,11 @@
 .auth_switch {
     font-size: 14px;
     text-align: center;
+}
+
+span.auth-error {
+    border: 2px solid #808080;
+    background-color: #eeeeee;
+    white-space: pre-wrap;
+    visibility: hidden;
 }

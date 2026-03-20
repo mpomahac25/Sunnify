@@ -1,5 +1,6 @@
 const express = require("express");
 const { query } = require("../helpers/db.js");
+const { encryptPassword, verifyPassword } = require("../helpers/pwEncrypt.js");
 
 const sunnifyRouter = express.Router();
 
@@ -22,15 +23,17 @@ sunnifyRouter.post("/register", async (req, res) => {
             return;
         }
 
-        // Validation of username and email
-        // TODO
+        // TODO: Additional validation of username and email (e.g. profanity filtering)
+
+        // Encrypt password
+        const pwEncrypted = await encryptPassword(req.body.password);
 
         // Create new user in database
         result = await query("INSERT INTO users (username, email, password_hash) VALUES ($1, $2, $3) RETURNING id",
             [
                 req.body.username,
                 req.body.email,
-                req.body.pwHash
+                pwEncrypted
             ]);
         res.status(200).json({ id: result.rows[0].id });
     } catch (error) {
