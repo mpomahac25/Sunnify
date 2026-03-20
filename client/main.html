@@ -10,55 +10,184 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" integrity="sha384-tViUnnbYAV00FLIhhi3v/dWt3Jxw4gZQcNoSCxCIFNJVCx7/D55/wXsrNIRANwdD" crossorigin="anonymous">
 </head>
 <body>
-    <main class ="main-page">
-    
-        <header class="header">
-            <div class="header_logo">logo</div>
-            <div class="header_sell">sell</div>
-            <div class="header_auth">Login</div>
-        </header>
+    <main class="main-page">
+        <!-- Responsive Navbar -->
+        <nav class="navbar navbar-expand-lg navbar-light bg-light">
+            <div class="container">
+                <a class="navbar-brand" href="#">Sunnify</a>
 
-        <section class="search">
-            <input class='search_input' type="text" placeholder="Search">
-            <input class="search_location" type="text" placeholder="Location">
-            <button class="search-button">Go</div>
-        </section>
+                <div class="ms-auto">
+                    <a href="./login.html" class="btn btn-outline-primary">Login</a>
+                </div>
+            </div>
+        </nav>
+        <!-- Responsive Search Section -->
+        <section class="search py-4 bg-secondary">
+            <div class="container">
 
-        <section class="categories">
-            <h2 id="categories-title">Categories</div>
-            <div id="categories-list">
-                <div class="category-item">Category 1</div>
-                <div class="category-item">Category 2</div>
-                <div class="category-item">Category 3</div>
+        <form class="d-flex gap-2 justify-content-center">
+            <input class="form-control" type="text" placeholder="Search">
+            <input class="form-control" type="text" placeholder="Location">
+            <button class="btn btn-primary">Go</button>
+        </form>     
+               
             </div>
         </section>
 
-        <section class="posts">
-            <!-- post example -->
-            <article class="post-card">
-                <div class="post-card_image"></div>
-                <div class="post-card_title">Flops</div>
-                <div class="post-card_price">10.00</div>
-                <div class="post-card_location">Oulu, Tuira</div>
-                <button class="post-card_save">Save</button>
-            </article>
-
-            <article class="post-card">
-                <div class="post-card_image"></div>
-                <div class="post-card_title">Fishing rod</div>
-                <div class="post-card_price">39.99</div>
-                <div class="post-card_location">Oulu, Kontinkangas</div>
-                <button class="post-card_save">Save</button>
-            </article>
-            
-            <button id="posts_load-more">Load More</button>
+        <!-- Responsive Categories Section -->
+        <section class="categories py-4">
+            <div class="container">
+                <h2 class="text-center mb-4">Categories</h2>
+                <div class="row g-3">
+                <div class="col-4 text-center">
+                    <button class="category-item btn btn-light w-100 py-3 shadow-sm">
+                        Category 1
+                    </button>
+                    <p class="mt-2 fw-semibold">Category 1</p>
+                </div>
+                <div class="col-4 text-center">
+                    <button class="category-item btn btn-light w-100 py-3 shadow-sm">
+                        Category 1
+                    </button>
+                    <p class="mt-2 fw-semibold">Category 1</p>
+                </div>                    
+                <div class="col-4 text-center">
+                    <button class="category-item btn btn-light w-100 py-3 shadow-sm">
+                        Category 1
+                    </button>
+                    <p class="mt-2 fw-semibold">Category 1</p>
+                </div>                    
+                    
+                </div>
+            </div>
         </section>
 
-        <footer class="footer">
-            <div class="footer_logo"></div>
-            <div class="footer_content">© 2026 Sunnify. All rights reserved.</div>
-        </footer>
+        <!-- Responsive Posts Section -->
+        <section class="posts py-4">
+            <div class="container">
+                <div class="row g-4">
+                    <!-- Post Card 1 -->
+                    <div class="col-6 col-md-6 col-lg-4">
+                        <div class="card h-100 shadow-sm">
+                            <div class="bg-secondary" style="height: 200px;"></div>
 
-    </main>
+                            <div class="card-body">
+                                <h5 class="card-title">Flops</h5>
+                                <p class="text-muted">Oulu, Tuira</p>
+                            </div>
+
+                            <div class="card-footer d-flex justify-content-between align-items-center">
+                                <span class="fw-bold">$10.00</span>
+                                <button class="btn btn-outline-danger btn-sm">
+                                    <i class="bi bi-heart"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>                    
+                    <!-- Post Card 2 -->
+                    <div class="col-6 col-md-6 col-lg-4">
+                        <div class="card h-100 shadow-sm">
+                            <div class="bg-secondary" style="height: 200px;"></div>
+
+                            <div class="card-body">
+                                <h5 class="card-title">Flops</h5>
+                                <p class="text-muted">Oulu, Tuira</p>
+                            </div>
+
+                            <div class="card-footer d-flex justify-content-between align-items-center">
+                                <span class="fw-bold">$10.00</span>
+                                <button class="btn btn-outline-danger btn-sm">
+                                    <i class="bi bi-heart"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>                    
+                    <!-- Post Card 3 -->
+                    <div class="col-6 col-md-6 col-lg-4">
+                        <div class="card h-100 shadow-sm">
+                            <div class="bg-secondary" style="height: 200px;"></div>
+
+                            <div class="card-body">
+                                <h5 class="card-title">Flops</h5>
+                                <p class="text-muted">Oulu, Tuira</p>
+                            </div>
+
+                            <div class="card-footer d-flex justify-content-between align-items-center">
+                                <span class="fw-bold">$10.00</span>
+                                <button class="btn btn-outline-danger btn-sm">
+                                    <i class="bi bi-heart"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Post Card 4 -->
+                    <div class="col-6 col-md-6 col-lg-4">
+                        <div class="card h-100 shadow-sm">
+                            <div class="bg-secondary" style="height: 200px;"></div>
+
+                            <div class="card-body">
+                                <h5 class="card-title">Flops</h5>
+                                <p class="text-muted">Oulu, Tuira</p>
+                            </div>
+
+                            <div class="card-footer d-flex justify-content-between align-items-center">
+                                <span class="fw-bold">$10.00</span>
+                                <button class="btn btn-outline-danger btn-sm">
+                                    <i class="bi bi-heart"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+                <div class="text-center mt-4">
+                    <button class="btn btn-secondary">Load More</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Responsive Footer -->
+            <footer class="footer bg-dark text-white py-5">
+                <div class="container">
+            <div class="row text-center text-md-start">
+                
+                <!-- Column 1 (LEFT) -->
+                <div class="col-12 col-md-4 mb-4">
+                    <h4 class="fw-bold">Sunnify</h4>
+                    <p class="text-secondary">Your marketplace</p>
+                </div>
+
+                <!-- Column 2 (CENTER) -->
+                <div class="col-12 col-md-4 mb-4 text-md-center">
+                    <h5 class="mb-3">Corporate</h5>
+                    <ul class="list-unstyled">
+                        <li class="mb-2"><a href="#" class="text-white text-decoration-none">About</a></li>
+                        <li class="mb-2"><a href="#" class="text-white text-decoration-none">Careers</a></li>
+                        <li class="mb-2"><a href="#" class="text-white text-decoration-none">Contact</a></li>
+                    </ul>
+                </div>
+
+                <!-- Column 3 (RIGHT) -->
+                <div class="col-12 col-md-4 mb-4 text-md-end">
+                    <h5 class="mb-3">Social</h5>
+                    <div class="d-flex justify-content-center justify-content-md-end gap-3 fs-5">
+                        <i class="bi bi-facebook"></i>
+                        <i class="bi bi-instagram"></i>
+                        <i class="bi bi-twitter"></i>
+                    </div>
+                </div>
+
+            </div>
+
+        <!-- Bottom -->
+        <div class="text-center mt-4 border-top pt-3 text-secondary">
+            © 2026 Sunnify. All rights reserved.
+        </div>
+    </div>
+</footer>    
+</main>
+
+    <!-- Bootstrap JS (required for navbar toggle and other interactive components) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-0pUGZvbkm6XF6gxjEnlmuGrJXVbNuzT9qBBavbLwCsOGabYfZo0T0to5eqruptLy" crossorigin="anonymous"></script>
 </body>
 </html>
