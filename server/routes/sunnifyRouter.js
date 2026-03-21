@@ -41,6 +41,44 @@ sunnifyRouter.post("/register", async (req, res) => {
     }
 });
 
+sunnifyRouter.post("/login", async (req, res) => {
+    try {
+        const loginIdentifier = req.body.usernameOrEmail;
+
+        let result;
+
+        // Check email first
+        if (loginIdentifier.includes("@")) {
+            result = await query("SELECT * FROM users WHERE email = $1", [loginIdentifier]);
+        }
+        // If not email, check by username
+        else {
+            result = await query("SELECT * FROM users WHERE username = $1", [loginIdentifier]);
+        }
+
+        if (result.rows.length === 0) {
+            res.status(401).json({ error: "Invalid username/email or password!" });
+            return;
+        }
+
+        // If we're here, a user was found! Check the password from request vs hashed password
+        const user = result.rows[0];
+        const passwordOk = await verifyPassword(req.body.password, user.password_hash);
+
+        if (!passwordOk) {
+            res.status(401).json({ error: "Invalid username/email or password!" });
+            return;
+        }
+
+        res.status(200).json({ message: "Login success!", id: user.id });
+
+        // Update last_login in database
+        result = await query("UPDATE users SET last_login = NOW() WHERE id = $1", [user.id]);
+    } catch (error) {
+        errorResponse(res, error);
+    }
+});
+
 //sunnifyRouter.get("/", async (req, res) => {
 //    try {
 //        const result = await query("SELECT * FROM task");
