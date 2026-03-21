@@ -7,7 +7,8 @@ CREATE TABLE users (
 	username VARCHAR(255) NOT NULL UNIQUE,
 	email VARCHAR(255) NOT NULL UNIQUE CHECK (email LIKE '%@%'),
 	password_hash VARCHAR(255) NOT NULL,
-	created_at TIMESTAMP DEFAULT NOW()
+	created_at TIMESTAMP DEFAULT NOW(),
+	last_login TIMESTAMP DEFAULT NOW()
 );
 
 CREATE TABLE posts (
