@@ -4,6 +4,28 @@ import { emailValidators } from "./validation/email.js";
 
 const BACKEND_ROOT_URL = "http://127.0.0.1:3000";
 
+document.addEventListener("DOMContentLoaded", async () => {
+    try {
+        const response = await fetch(`${BACKEND_ROOT_URL}/check-session`, {
+            method: "get",
+            credentials: "include"
+        });
+
+        const result = await response.json();
+
+        if (result.loggedIn) {
+            // Later on change to user account management page
+            window.location.href = "main.html";
+        }
+        else {
+            document.body.classList.remove("hidden");
+        }
+    } catch (error) {
+        console.error(error);
+        document.body.classList.remove("hidden");
+    }
+});
+
 const form = document.querySelector(".auth-form");
 
 const usernameField = document.getElementById("reg-username");

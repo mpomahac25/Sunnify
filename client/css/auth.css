@@ -59,3 +59,7 @@ span.auth-error {
     white-space: pre-wrap;
     visibility: hidden;
 }
+
+.hidden {
+    display: none;
+}
