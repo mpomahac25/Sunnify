@@ -50,6 +50,24 @@ app.get("/post/create", (req, res) => {
     res.sendFile(path.join(client, "createpost.html"));
 });
 
+//examples
+
+app.get("/examples/profile", (req, res) => {
+    res.sendFile(path.join(client, "/page-examples/profilepage-example.html"))
+})
+
+app.get("/examples/post", (req, res) => {
+    res.sendFile(path.join(client, "/page-examples/postpage-example.html"))
+})
+
+app.get("/examples/search", (req, res) => {
+    res.sendFile(path.join(client, "/page-examples/searchpage-example.html"))
+})
+
+app.get("/examples/chat", (req, res) => {
+    res.sendFile(path.join(client, "/page-examples/chatpage-example.html"))
+})
+
 app.get("/demo/1", (req, res) => {
     res.sendFile(path.join(client, "/tech-examples/reusable-html/demo.html"));
 });

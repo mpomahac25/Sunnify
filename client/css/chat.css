@@ -1,95 +1,96 @@
 .chatpage-example {
-    display: flex;
-    flex-direction: column;
     min-height: 100vh;
-    gap: 10px;
-    padding: 10px;
-}
-
-.chat-container {
-    display: flex;
-    flex: 1;
-    gap: 10px;
-}
-
-.chat-sidebar {
-    width: 50px;
     display: flex;
     flex-direction: column;
-    gap: 10px;
-    padding: 10px;
+    background: #f8f9fa;
+}
+
+.chat-tip-card,
+.chat-sidebar-card,
+.chat-main-card {
+    border-radius: 1.5rem;
 }
 
 .chat-user {
-    display: flex;
-    justify-content: center;
+    border: 1px solid #e9ecef;
+    border-radius: 1rem;
+    padding: 0.9rem 1rem;
 }
 
-.user-avatar {
-    width: 40px;
-    height: 40px;
+.chat-user.active {
+    border-color: rgba(13, 110, 253, 0.25);
+    background: #f8fbff;
 }
 
-.chat-main {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-}
-
-.chat-header {
-    height: 60px;
-    display: flex;
-    align-items: center;
-    padding: 10px;
-}
-
-.chat-user-info {
-    display: flex;
-    gap: 10px;
-    align-items: center;
-}
-
+.user-avatar,
 .avatar {
-    width: 40px;
-    height: 40px;
+    width: 48px;
+    height: 48px;
+    background: linear-gradient(135deg, #0d6efd, #6ea8fe);
+    color: #fff;
+    font-weight: 700;
+    flex-shrink: 0;
 }
-
 
 .messages {
-    flex: 1;
     display: flex;
     flex-direction: column;
-    gap: 10px;
-    padding: 10px;
+    gap: 1rem;
+    min-height: 420px;
+    max-height: 520px;
     overflow-y: auto;
+    background: linear-gradient(180deg, rgba(13, 110, 253, 0.03), rgba(255, 255, 255, 0));
+}
+
+.message-received,
+.message-sent {
+    max-width: 75%;
 }
 
 .message-received {
     align-self: flex-start;
-    max-width: 70%;
 }
 
 .message-sent {
     align-self: flex-end;
-    max-width: 70%;
 }
 
 .message-text {
-    padding: 5px;
+    padding: 0.85rem 1rem;
+    border-radius: 1rem;
+    line-height: 1.4;
+}
+
+.message-received .message-text {
+    background: #fff;
+    border: 1px solid #e9ecef;
+    color: #212529;
+}
+
+.message-sent .message-text {
+    background: #0d6efd;
+    color: #fff;
 }
 
 .message-time {
-    font-size: 10px;
+    margin-top: 0.35rem;
+    font-size: 0.75rem;
+    color: #6c757d;
+    padding-inline: 0.25rem;
 }
 
-.chat-input {
-    height: 60px;
-    display: flex;
-    align-items: center;
-    padding: 10px;
+.message-sent .message-time {
+    text-align: right;
 }
 
-.chat-input input {
-    width: 100%;
-    height: 30px;
+@media (max-width: 767.98px) {
+    .messages {
+        min-height: 320px;
+        max-height: none;
+    }
+
+    .message-received,
+    .message-sent {
+        max-width: 90%;
+    }
 }

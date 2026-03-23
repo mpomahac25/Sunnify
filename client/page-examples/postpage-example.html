@@ -4,60 +4,164 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Post</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="./../css/main.css">
     <link rel="stylesheet" href="./../css/post.css">
-    <link rel="stylesheet" href="./../css/style.css">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" integrity="sha384-tViUnnbYAV00FLIhhi3v/dWt3Jxw4gZQcNoSCxCIFNJVCx7/D55/wXsrNIRANwdD" crossorigin="anonymous">
-</head>
 </head>
 <body>
-    <div class="post-page-example">
-        <div class="header">
-            <div class="logo"></div>
-            <div class="sell"></div>
-            <div class="auth"></div>
-        </div>
-        
-        <div class="post-content">
-            <div class="post-gallery">
-                <div class="main-image">img</div>
+    <main class="post-page-example">
+        <div id="header-container"></div>
 
-                <div class="image-thumbnails">
-                    <div class="thumbnail"></div>
-                    <div class="thumbnail"></div>
-                    <div class="thumbnail"></div>
+        <section class="bg-light border-bottom py-4">
+            <div class="container">
+                <div class="row g-4 align-items-center">
+                    <div class="col-12 col-lg-8">
+                        <span class="badge text-bg-warning mb-3">Featured listing</span>
+                        <h1 class="display-6 fw-semibold mb-3">View item details clearly before you decide to message the seller.</h1>
+                        <p class="lead text-muted mb-0">Check photos, price, condition, and pickup details in one place before moving to chat.</p>
+                    </div>
+                    <div class="col-12 col-lg-4">
+                        <div class="card border-0 shadow-sm post-tip-card">
+                            <div class="card-body p-4">
+                                <h2 class="h5 mb-3">Buyer Tips</h2>
+                                <ul class="list-unstyled mb-0 d-grid gap-3 text-muted">
+                                    <li class="d-flex gap-3">
+                                        <i class="bi bi-images text-primary"></i>
+                                        <span>Review all photos carefully to spot condition details early.</span>
+                                    </li>
+                                    <li class="d-flex gap-3">
+                                        <i class="bi bi-cash-coin text-primary"></i>
+                                        <span>Compare the price with the condition before reaching out.</span>
+                                    </li>
+                                    <li class="d-flex gap-3">
+                                        <i class="bi bi-chat-dots text-primary"></i>
+                                        <span>Use chat to confirm pickup time, availability, and reserve terms.</span>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
-        
-            <div class="post-details">
-                <div class="post-name">Post Name</div>
-                <div class="post-category">Category</div>
-                <div class="post-price">$99.99</div>
-                <div class="post-location">Location: Tuira</div>
-                <div class="button-section">
-                    <div class="save-btn">save-btn</div>
-                    <div class="contact-btn">chat-btn</div>
+        </section>
+
+        <section class="py-5">
+            <div class="container">
+                <div class="row g-4">
+                    <div class="col-12 col-lg-7">
+                        <div class="card border-0 shadow-sm post-gallery-card">
+                            <div class="card-body p-4">
+                                <div class="main-image rounded-4 d-flex align-items-center justify-content-center mb-3">
+                                    <span class="text-white fw-semibold">Main Image</span>
+                                </div>
+                                <div class="row g-3">
+                                    <div class="col-4">
+                                        <div class="thumbnail rounded-4"></div>
+                                    </div>
+                                    <div class="col-4">
+                                        <div class="thumbnail rounded-4"></div>
+                                    </div>
+                                    <div class="col-4">
+                                        <div class="thumbnail rounded-4"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-12 col-lg-5">
+                        <div class="card border-0 shadow-sm post-details-card h-100">
+                            <div class="card-body p-4 p-md-5">
+                                <div class="d-flex justify-content-between align-items-start gap-3 mb-3">
+                                    <div>
+                                        <span class="badge text-bg-light border mb-2">Home</span>
+                                        <h2 class="h3 mb-1">Fishing rod</h2>
+                                    </div>
+                                    <button class="favorite-btn btn btn-outline-danger btn-sm">
+                                        <i class="bi bi-heart"></i>
+                                    </button>
+                                </div>
+
+                                <div class="post-price mb-4">23 EUR</div>
+
+                                <ul class="list-unstyled d-grid gap-3 mb-4 text-muted">
+                                    <li class="d-flex gap-3">
+                                        <i class="bi bi-geo-alt text-primary"></i>
+                                        <span>Oulu, Tuira</span>
+                                    </li>
+                                    <li class="d-flex gap-3">
+                                        <i class="bi bi-box-seam text-primary"></i>
+                                        <span>Condition: Good</span>
+                                    </li>
+                                    <li class="d-flex gap-3">
+                                        <i class="bi bi-clock-history text-primary"></i>
+                                        <span>Posted 2 days ago</span>
+                                    </li>
+                                </ul>
+
+                                <div class="d-flex flex-column flex-md-row gap-3">
+                                    <button class="btn btn-primary btn-lg flex-fill">Contact seller</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row g-4 mt-1">
+                    <div class="col-12 col-lg-8">
+                        <div class="card border-0 shadow-sm post-description-card">
+                            <div class="card-body p-4 p-md-5">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <h2 class="h4 mb-0">Description</h2>
+                                    <span class="badge text-bg-success">Available</span>
+                                </div>
+                                <p class="text-muted mb-3">Super mega cool fishing rod for spin fishing. Caught two sharks and one whale on it! Pickup on Mondays/Tuesday only.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-12 col-lg-4">
+                        <div class="card border-0 shadow-sm seller-info-card h-100">
+                            <div class="card-body p-4">
+                                <h2 class="h5 mb-3">Seller</h2>
+                                <div class="d-flex align-items-center gap-3 mb-3">
+                                    <div class="seller-avatar rounded-circle d-flex align-items-center justify-content-center">
+                                        <i class="bi bi-person text-white"></i>
+                                    </div>
+                                    <div>
+                                        <h3 class="h6 mb-1">Hasbulla</h3>
+                                        <p class="text-muted mb-0">4.9 rating</p>
+                                    </div>
+                                </div>
+                                <ul class="list-unstyled d-grid gap-3 mb-4 text-muted">
+                                    <li class="d-flex gap-3">
+                                        <i class="bi bi-geo-alt text-primary"></i>
+                                        <span>Oulu, Tuira</span>
+                                    </li>
+                                    <li class="d-flex gap-3">
+                                        <i class="bi bi-bag text-primary"></i>
+                                        <span>126 items sold</span>
+                                    </li>
+                                    <li class="d-flex gap-3">
+                                        <i class="bi bi-calendar4 text-primary"></i>
+                                        <span>Member since 2020</span>
+                                    </li>
+                                </ul>
+                                <a href="./profilepage-example.html" class="btn btn-outline-primary w-100">View profile</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-            </div>
-        </div>
+        </section>
 
-        <div class="post-description">
-            <div class="description-title">Description</div>
-            <div class="description-content">Blabla.</div>
-            <!-- we can add condition as variable -->
-        </div>
+    </main>
 
-        <div class="seller-info">
-            <div class="seller-name">Seller Name</div>
-            <div class="seller-rating">Rating: 4.5/5</div>
-            <div class="seller-location">Location: Tuira</div>
-            <div class="seller-profile-link">View Profile</div>
-        </div>
+    <div id="footer-container"></div>
 
-        <div class="footer">
-            <div class="footer-logo"></div>
-            <div class="footer-content">© 2026 Sunnify. All rights reserved.</div>
-        </div>
-    </div>
+    <script src="./../Reusable-HTML/components/headerLoader.js"></script>
+    <script src="./../Reusable-HTML/components/footerLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

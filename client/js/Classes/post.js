@@ -4,13 +4,16 @@ class Post{
     #price
     #location
     #category
-    constructor(images, name, price, location){
+    #condition
+    #status
+    constructor(images, name, price, location, status, condition){
         this.#images = images //massive
         this.#name = name
-         this.#category = category
+        this.#category = category
         this.#price = price
         this.#location = location
-       
+        this.#condition = condition
+        this.#status = status
     }
 
     getImages(){
@@ -35,6 +38,14 @@ class Post{
 
     getCategory(){
         return this.#category
+    }
+
+    getCondition(){
+        return this.#condition
+    }
+
+    getStatus(){
+        return this.#status
     }
 }
 
