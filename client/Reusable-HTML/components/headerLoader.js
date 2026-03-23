@@ -4,7 +4,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const loginText = container?.dataset?.loginText;
     const loginHref = container?.dataset?.loginHref;
 
-    fetch("Reusable-HTML/components/header.html")
+    fetch("/Reusable-HTML/components/header.html")
         .then(response => response.text())
         .then(html => {
             if (!container) return;

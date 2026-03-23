@@ -1,80 +1,74 @@
 .search-page-example {
-    display: flex;
-    flex-direction: column;
-    min-height: 100vh;
-    gap: 10px;
-    padding: 10px;
+    padding: 2rem 0;
+    background: #f8f9fa;
+    min-height: auto;
 }
 
-.search-header {
-    display: flex;
+/* search bar spacing */
+.search-bar { margin-bottom: 1.25rem; }
+
+/* filters card */
+.filters-card {
+    border-radius: 0.75rem;
+    background: #fff;
+    box-shadow: 0 6px 18px rgba(22, 27, 34, 0.04);
+    padding: 1rem;
+}
+
+/* make filters sticky on large screens */
+@media (min-width: 992px) {
+    .filters-card {
+        position: sticky;
+        top: 1.25rem;
+    }
+}
+
+/* results row spacing */
+.results-row { margin-top: 0.5rem; }
+
+/* item media */
+.img-holder.search-media {
+    height: 200px;
+    border-radius: 1rem;
+    background-color: blueviolet; /* keep placeholder purple */
+    background-size: cover;
+    background-position: center;
+}
+
+/* smaller screens */
+@media (max-width: 991.98px) {
+    .filters-card { margin-bottom: 1rem; }
+    .img-holder.search-media { height: 180px; }
+}
+
+/* small visual refinements */
+.results-row .card { border-radius: 1rem; overflow: hidden; }
+.filters-card .form-select, .filters-card .form-control { font-size: .9rem; }
+
+/* make dropdown button compact and rounded  */
+.dropdown-toggle.btn-sm {
+    padding: .28rem .55rem;
+    border-radius: .5rem;
+    min-width: 8rem;
+    display: inline-flex;
+    align-items: center;
     justify-content: space-between;
-    padding: 10px;
 }
 
-.search-content {
+/* highlight active item with bright green */
+.dropdown-menu .dropdown-item.active,
+.dropdown-menu .dropdown-item:focus,
+.dropdown-menu .dropdown-item:hover {
+    background-color: #0cb5df; 
+    color: #000;
+}
+
+/* make menu slightly bigger and airy */
+.dropdown-menu { min-width: 12rem; padding: .25rem 0; }
+
+.load-more-row {
+    margin-top: 2.5rem;   /* increase space above the button */
+    margin-bottom: 1rem;  /* small gap before footer */
     display: flex;
-    gap: 10px;
-    flex: 1;
-    flex-direction: column;
-}
-
-.filters {
-    width: auto;
-    display: flex;
-    flex-direction: row;
-    gap: 10px;
-    padding: 10px;
-}
-
-.filter-block {
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-}
-
-.price-inputs {
-    display: flex;
-    gap: 5px;
-}
-
-.price-inputs input {
-    width: 50%;
-}
-
-.filter-actions {
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-}
-
-.results {
-    flex: 1;
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 10px;
-    padding: 10px;
-}
-
-.post-item {
-    height: 140px;
-    display: flex;
-    flex-direction: column;
-}
-
-.post-image {
-    height: 80px;
-}
-
-.post-name,
-.price,
-.location {
-    height: 20px;
-}
-
-.load-more {
-    grid-column: 1 / -1;
-    height: 40px;
-    width: 100px;
-    text-align: center;
+    justify-content: center;
 }

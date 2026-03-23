@@ -1,80 +1,211 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Search</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" integrity="sha384-tViUnnbYAV00FLIhhi3v/dWt3Jxw4gZQcNoSCxCIFNJVCx7/D55/wXsrNIRANwdD" crossorigin="anonymous">
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Search — Sunnify</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="../css/main.css">
     <link rel="stylesheet" href="../css/search.css">
-    <base href="/Sunnify/client/">
-</head>
 </head>
 <body>
-
     <div id="header-container"></div>
 
-    <div class="search-page-example">
+    <main class="search-page-example py-4 ">
+        <div class="container">
+            <div class="search-bar">
+                <form class="d-flex gap-2 align-items-center">
+                    <input class="form-control" type="text" placeholder="Search items, keywords..." aria-label="Search">
+                    <input class="form-control" type="text" placeholder="Location" aria-label="Location">
+                    <button class="btn btn-primary">Go</button>
+                </form>
+            </div>
 
-        <div class="search-header">
-            <div class="search-query"></div>
-            <div class="results count"></div>
-        </div>
+            <div class="row g-4">
+                <!-- mobile filter toggle -->
+                <div class="col-12 d-lg-none">
+                    <button class="btn btn-outline-secondary btn-sm w-100" type="button"
+                            data-bs-toggle="collapse" data-bs-target="#filtersCollapse" aria-expanded="false"
+                            aria-controls="filtersCollapse">
+                        Show filters
+                    </button>
+                </div>
 
-        <div class="search-content">
-            <div class="filters">
-                <div class="filter-block">
-                    <div class="filter-title">Price</div>
-                    <div class="price-inputs">
-                        <input type="text" placeholder="min">
-                        <input type="text" placeholder="max">
+                <aside class="col-12 col-lg-3">
+                    <!-- collapse so it hides on mobile and stays visible on lg+ -->
+                    <div class="collapse d-lg-block" id="filtersCollapse">
+                        <div class="card p-3 filters-card">
+                            <h6 class="mb-3">Filters</h6>
+
+                            <label class="form-label small">Price</label>
+                            <div class="d-flex gap-2 mb-3">
+                                <input class="form-control form-control-sm" name="price_min" placeholder="min">
+                                <input class="form-control form-control-sm" name="price_max" placeholder="max">
+                            </div>
+
+                            <label class="form-label small" for="location-select">Location</label>
+                            <select id="location-select" name="location" class="form-select form-select-sm mb-3" aria-label="Select location">
+                                <option value="">Any</option>
+                                <option value="Topilla">Topilla</option>
+                                <option value="Tori">Tori</option>
+                                <option value="Haukipudas">Haukipudas</option>
+                                <option value="Pateniemi">Pateniemi</option>
+                            </select>
+
+                            <label class="form-label small" for="category-select">Category</label>
+                            <select id="category-select" name="category" class="form-select form-select-sm mb-3" aria-label="Select category">
+                                <option value="">All</option>
+                                <option value="category1">Category 1</option>
+                                <option value="category2">Category 2</option>
+                                <option value="category3">Category 3</option>
+                            </select>
+
+                            <div class="d-flex gap-2">
+                                <button id="apply-filters-btn" class="btn btn-primary btn-sm">Apply</button>
+                                <button id="reset-filters-btn" class="btn btn-outline-secondary btn-sm" type="button">Reset</button>
+                            </div>
+                        </div>
                     </div>
-                </div>
+                </aside>
+                    <!-- result count + sort -->
+                    <div class="ms-auto d-flex align-items-center gap-2">
+                        <label for="sort-select" class="visually-hidden">Sort</label>
+                        <div class="dropdown">
+                            <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button"
+                                    id="sortDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                More relevant
+                            </button>
+                            <ul class="dropdown-menu" aria-labelledby="sortDropdown">
+                                <li><a class="dropdown-item active" href="#" data-value="relevance">Relevant</a></li>
+                                <li><a class="dropdown-item" href="#" data-value="newest">Newest</a></li>
+                                <li><a class="dropdown-item" href="#" data-value="price-asc">Price: Low to High</a></li>
+                                <li><a class="dropdown-item" href="#" data-value="price-desc">Price: High to Low</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                <div class="text-muted small" id="resultsCount">0 results</div>
 
-                <div class="filter-block">
-                    <div class="filter-title">Location</div>
-                    <div class="dropdown">Select location</div>
-                </div>
 
-                <div class="filter-block">
-                    <div class="filter-title">Category</div>
-                    <div class="dropdown">Select category</div>
-                </div>
-                <!-- Condition mb? -->
-                <div class="filter-block">
-                    <div class="filter-title">Sort by</div>
-                    <div class="dropdown">Newest</div>
-                </div>
-                <div class="filter-actions">
-                    <button>Apply filters</button>
-                    <button>Reset</button>
-                </div>
+                <section class="col-12 col-lg-9">
+                    <div class="row g-4 results-row" id="resultsGrid">
+                        <!-- example card (duplicate as needed) -->
+                        <div class="col-12 col-sm-6 col-lg-4 result-card">
+                            <article class="img-container card h-100">
+                                <div class="img-holder search-media" role="img" aria-label="Item image"></div>
+                                <div class="card-body">
+                                    <h5 class="card-title">Item Title</h5>
+                                    <p class="text-muted mb-2">Location</p>
+                                    <span class="fw-bold">10 EUR</span>
+                                </div>
+                                <div class="card-footer d-flex justify-content-between align-items-center">
+                                    <small class="text-muted">Added 2 days ago</small>
+                                    <button class="favorite-btn btn btn-outline-danger btn-sm">
+                                        <i class="bi bi-heart fs-5"></i>
+                                    </button>
+                                </div>
+                            </article>
+                        </div>
+                        <!-- /example card -->
 
-            </div>
+                        <div class="col-12 col-sm-6 col-lg-4 result-card">
+                            <article class="img-container card h-100">
+                                <div class="img-holder search-media" role="img" aria-label="Item image"></div>
+                                <div class="card-body">
+                                    <h5 class="card-title">Second Item</h5>
+                                    <p class="text-muted mb-2">Location</p>
+                                    <span class="fw-bold">20 EUR</span>
+                                </div>
+                                <div class="card-footer d-flex justify-content-between align-items-center">
+                                    <small class="text-muted">Added 3 days ago</small>
+                                    <button class="favorite-btn btn btn-outline-danger btn-sm">
+                                        <i class="bi bi-heart fs-5"></i>
+                                    </button>
+                                </div>
+                            </article>
+                        </div>
+                        <!-- /example card -->
+                    </div>
 
-            <div class="results">
-                <div class="post-item">
-                    <div class="post-image"></div>
-                    <div class="post-name"></div>
-                    <div class="price"></div>
-                    <div class="location"></div>
-                    <div class="post-preview-btn"></div>
-                </div>
-                <div class="post-item">
-                </div>
-                <div class="post-item">
-                </div>
-
-                <div class="load-more">Load more...</div>
+                    <div class="text-center mt-4 load-more-row">
+                        <button class="btn btn-secondary" id="loadMoreBtn">Load more</button>
+                    </div>
+                    
+                </section>
+                
             </div>
         </div>
-
-    </div>
+    </main>
 
     <div id="footer-container"></div>
 
-    <script src="/Sunnify/client/Reusable-HTML/components/headerLoader.js"></script>    
-    <script src="/Sunnify/client/Reusable-HTML/components/footerLoader.js"></script>    
+    <script src="../Reusable-HTML/components/headerLoader.js"></script>
+    <script src="../Reusable-HTML/components/footerLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        (function () {
+            const resultsGrid = document.getElementById('resultsGrid');
+            const resultsCount = document.getElementById('resultsCount');
+            const applyBtn = document.getElementById('apply-filters-btn');
+            const resetBtn = document.getElementById('reset-filters-btn');
+            const filtersCollapse = document.getElementById('filtersCollapse');
+            const sortSelect = document.getElementById('sort-select');
+
+            function updateResultsCount() {
+            const count = resultsGrid ? resultsGrid.querySelectorAll('.result-card').length : 0;
+            if (resultsCount) resultsCount.textContent = count + (count === 1 ? ' result' : ' results');
+            }
+
+            // simple demo handlers (replace with real filtering/sorting logic)
+            if (applyBtn) {
+            applyBtn.addEventListener('click', function (e) {
+                e.preventDefault();
+                // TODO: implement actual filtering call here
+                // close filters on mobile (bootstrap collapse)
+                if (filtersCollapse && window.bootstrap) {
+                const bsCollapse = bootstrap.Collapse.getInstance(filtersCollapse) || new bootstrap.Collapse(filtersCollapse, {toggle:false});
+                if (window.innerWidth < 992) bsCollapse.hide();
+                }
+                updateResultsCount();
+            });
+            }
+
+            if (resetBtn) {
+            resetBtn.addEventListener('click', function () {
+                document.getElementById('location-select').value = '';
+                document.getElementById('category-select').value = '';
+                updateResultsCount();
+            });
+            }
+
+            if (sortSelect) {
+            sortSelect.addEventListener('change', function () {
+                // TODO: implement real sorting of cards
+                // for now visual placeholder only
+                console.log('Sort:', sortSelect.value);
+            });
+            }
+
+            // initial count
+            updateResultsCount();
+        })();
+    </script>
+
+    <script>
+        document.querySelectorAll('.dropdown-menu .dropdown-item').forEach(item => {
+            item.addEventListener('click', (e) => {
+            e.preventDefault();
+            // update visible label
+            document.getElementById('sortDropdown').textContent = item.textContent;
+            // mark active
+            document.querySelectorAll('.dropdown-item').forEach(i => i.classList.remove('active'));
+            item.classList.add('active');
+            // TODO: call your sort/filter function with item.dataset.value
+            console.log('Sort selected:', item.dataset.value);
+                    });
+                });
+    </script>
 
 </body>
 </html>
