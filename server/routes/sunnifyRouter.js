@@ -122,7 +122,7 @@ sunnifyRouter.post("/posts", isUserAuthenticated, async (req, res) => {
             [title, description, price, location, category, condition, status, req.session.userId]
         );
         result.status(201).json({ id: result.rows[0].id });
-    }catch {
+    }catch (error){
         errorResponse(res, error)
     }
 })
@@ -138,7 +138,7 @@ sunnifyRouter.get("/posts/:id", async (req, res) => {
             return res.status(404).json({ error: "Post not found" });
         }
     } catch (error){
-        errorResponse(res, err)
+        errorResponse(res, error)
     }
 })
 
