@@ -1,27 +1,31 @@
 .img-holder {
-    background-color: blueviolet !important;
+    background-color: blueviolet ;
     border-radius: 1rem;
 }
 
-.img-container {
-    border-radius: 1rem;
-    overflow: hidden;
+.img-container.card {
+    border: none;
 }
 
 .favorite-btn {
     border: none;
 }
 
-.card {
-    border: none !important;
+main .card { border: none; }
+.createpost-page .card { border: none; }
+
+.card-footer { 
+    border-top: none;
+    background: none;
 }
 
-.card-footer {
-    border-top: none !important;
-    background: none !important;
+.footer a,
+.footer i {
+    color: white;
+    transition: color 0.2s ease;
 }
 
 .footer a:hover,
-.footer i:hover {
-    color: #0a58ca !important;
+.footer a:hover i {
+    color: #0a58ca;
 }

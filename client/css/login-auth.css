@@ -52,8 +52,16 @@ body, .auth-page {
 }
 
 .auth-form_input_invalid {
-    border: 2px solid red;
-    box-shadow: 0 0 0 1000px #ffcccc inset;
+    border: 2px solid #dc3545; /* bootstrap danger */
+    box-shadow: 0 0 0 0.25rem rgba(220, 53, 69, 0.15);
+    background-color: #fff5f5; /* background error */
+    transition: border-color .15s ease, box-shadow .15s ease, background-color .15s ease;
+}
+
+input[aria-invalid="true"],
+input:invalid {
+    border-color: #dc3545;
+    box-shadow: 0 0 0 0.25rem rgba(220, 53, 69, 0.15);
 }
 
 .auth-form_submit {
@@ -71,8 +79,3 @@ span.auth-error {
     white-space: pre-wrap;
     visibility: hidden;
 }
-
-.hidden {
-    display: none;
-}
-

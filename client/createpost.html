@@ -64,25 +64,25 @@
                                 <form class="row g-4">
                                     <div class="col-12">
                                         <label for="listing-title" class="form-label fw-semibold">Title</label>
-                                        <input id="listing-title" type="text" class="form-control form-control-lg" placeholder="e.g. Cool fishing rod">
+                                        <input id="listing-title" type="text" name="title" class="form-control form-control-lg" placeholder="e.g. Cool fishing rod">
                                     </div>
 
                                     <div class="col-12">
                                         <label for="listing-description" class="form-label fw-semibold">Description</label>
-                                        <textarea id="listing-description" class="form-control createpost-textarea" placeholder="Describe condition, size, pickup details, and anything helpful for the buyer."></textarea>
+                                        <textarea id="listing-description" name="description" class="form-control createpost-textarea" placeholder="Describe condition, size, pickup details, and anything helpful for the buyer."></textarea>
                                     </div>
 
                                     <div class="col-12 col-md-6">
                                         <label for="listing-price" class="form-label fw-semibold">Price</label>
                                         <div class="input-group input-group-lg">
-                                            <input id="listing-price" type="text" class="form-control" placeholder="25">
+                                            <input id="listing-price" type="text" name="price" class="form-control" placeholder="25">
                                             <span class="input-group-text">EUR</span>
                                         </div>
                                     </div>
 
                                     <div class="col-12 col-md-6">
                                         <label for="listing-condition" class="form-label fw-semibold">Condition</label>
-                                        <select id="listing-condition" class="form-select form-select-lg">
+                                        <select id="listing-condition" name="condition" class="form-select form-select-lg">
                                             <option selected>Choose condition</option>
                                             <option>Like new</option>
                                             <option>Good</option>
@@ -92,7 +92,7 @@
 
                                     <div class="col-12 col-md-6">
                                         <label for="listing-location" class="form-label fw-semibold">Location</label>
-                                        <select id="listing-location" class="form-select form-select-lg">
+                                        <select id="listing-location" name="location" class="form-select form-select-lg">
                                             <option selected>Select location</option>
                                             <option>Oulu, Tuira</option>
                                             <option>Oulu, Keskusta</option>
@@ -102,7 +102,7 @@
 
                                     <div class="col-12 col-md-6">
                                         <label for="listing-category" class="form-label fw-semibold">Category</label>
-                                        <select id="listing-category" class="form-select form-select-lg">
+                                        <select id="listing-category" name="category" class="form-select form-select-lg">
                                             <option selected>Select category</option>
                                             <option>Clothing</option>
                                             <option>Home</option>
