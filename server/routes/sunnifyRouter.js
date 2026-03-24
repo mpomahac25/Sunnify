@@ -114,12 +114,26 @@ sunnifyRouter.get("/check-session", (req, res) => {
 sunnifyRouter.post("/posts", isUserAuthenticated, async (req, res) => {
     try {
         const { title, description, price, location, category, condition, status } = req.body;
+        
+        // if elements epmty
+        if (!title || !description || !location || !category || !condition){
+            return res.status(400).json({error: "Missing required fields"});
+        }
 
+        // price = number
+        const parsedPrice = Number(price);
+
+        //if price is fucked
+        if (Number.isNaN(parsedPrice) || parsedPrice < 0) {
+            return res.status(400).json({ error: "Invalid price"});
+        }
+
+        // creating new post in db
         const result = await query(
             `INSERT INTO posts (title, description, price, location, category, condition, status, user_id)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8
             RETURNING id)`,
-            [title, description, price, location, category, condition, status, req.session.userId]
+            [title, description, parsedPrice, location, category, condition, status || "available", req.session.userId]
         );
         result.status(201).json({ id: result.rows[0].id });
     }catch (error){
@@ -130,13 +144,21 @@ sunnifyRouter.post("/posts", isUserAuthenticated, async (req, res) => {
 // GET exact post
 sunnifyRouter.get("/posts/:id", async (req, res) => {
     try{
+        // get data
         const id = parseInt(req.params.id);
+        
+        // check data
+        if (Number.isNaN(id)) {
+            return res.status(400).json({ error: "Invalid post id" });
+        }
 
         const result = await query("SELECT * FROM posts WHERE id = $1", [id]);
 
         if (result.rows.length === 0) {
             return res.status(404).json({ error: "Post not found" });
         }
+
+        res.status(200).json(result.rowss[0]);
     } catch (error){
         errorResponse(res, error)
     }
