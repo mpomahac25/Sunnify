@@ -2,6 +2,8 @@ DROP DATABASE IF EXISTS sunnify;
 
 CREATE DATABASE sunnify;
 
+\c sunnify;
+
 CREATE TABLE users (
 	id SERIAL PRIMARY KEY,
 	username VARCHAR(255) NOT NULL UNIQUE,

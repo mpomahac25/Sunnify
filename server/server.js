@@ -31,8 +31,6 @@ app.use(session({
 
 app.use(express.static(client));
 
-const serveIndex = require('serve-index');
-app.use('/files', express.static(client), serveIndex(client, { icons: true }));
 
 app.get("/", (req, res) => {
     res.sendFile(path.join(client, "main.html"));
