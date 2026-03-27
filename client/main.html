@@ -11,15 +11,23 @@
 <body>
     <main>
         <div id="header-container"></div>
-        <section class="search py-4 bg-light">
+
+        <section class="search py-3 bg-light border-bottom">
             <div class="container">
-                <form class="d-flex gap-2 justify-content-center">
-                    <input class="form-control" type="text" placeholder="Search">
-                    <input class="form-control" type="text" placeholder="Location">
-                    <button class="btn btn-primary">Go</button>
+                <form class="row g-2 justify-content-center">
+                    <div class="col-12 col-md-4">
+                        <input class="form-control" type="text" placeholder="Search">
+                    </div>
+                    <div class="col-12 col-md-4">
+                        <input class="form-control" type="text" placeholder="Location">
+                    </div>
+                    <div class="col-12 col-md-2">
+                        <button class="btn btn-primary w-100">Go</button>
+                    </div>
                 </form>
             </div>
         </section>
+
         <section class="categories py-4">
             <div class="container">
                 <h2 class="text-center mb-4">Categories</h2>
@@ -39,6 +47,7 @@
                 </div>
             </div>
         </section>
+
         <section class="posts py-4">
             <div class="container">
                 <div class="row g-4">
@@ -113,10 +122,10 @@
 
     </main>
 
-    <script src="Reusable-HTML/components/headerLoader.js"></script>    
-    <script src="Reusable-HTML/components/footerLoader.js"></script>    
+    <script src="Reusable-HTML/components/headerLoader.js"></script>
+    <script src="Reusable-HTML/components/footerLoader.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
-    <script type="module" src="js/main.js"></script>    
+    <script type="module" src="js/main.js"></script>
 
 </body>
 </html>

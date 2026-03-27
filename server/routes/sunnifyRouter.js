@@ -164,6 +164,19 @@ sunnifyRouter.get("/posts/:id", async (req, res) => {
     }
 })
 
+// Search System
+
+sunnifyRouter.post("/search", async (req, res) => {
+    const searchText = req.body.query;
+    if (!searchText || !searchText.trim()) {
+        return res.status(400).json({ error: "No search text provided" });
+    }
+    const normalizedText = searchText.trim().toLowerCase();
+    const keywords = normalizedText.split(/[\s,;.]+/).filter(Boolean);
+    res.json({ keywords });
+});
+
+/*
 //sunnifyRouter.get("/", async (req, res) => {
 //    try {
 //        const result = await query("SELECT * FROM task");
@@ -184,6 +197,7 @@ sunnifyRouter.get("/posts/:id", async (req, res) => {
 //        errorResponse(res, error);
 //    }
 //})
+*/
 
 const errorResponse = (res, error) => {
     console.log(error);
