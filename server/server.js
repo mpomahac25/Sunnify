@@ -36,10 +36,6 @@ app.get("/", (req, res) => {
     res.sendFile(path.join(client, "main.html"));
 });
 
-app.get("/", (req, res) => {
-    res.sendFile(path.join(client, "register.html"));
-});
-
 app.get("/register", (req, res) => {
     res.sendFile(path.join(client, "register.html"));
 });
@@ -48,7 +44,11 @@ app.get("/login", (req, res) => {
     res.sendFile(path.join(client, "login.html"));
 });
 
-app.get("/post/create", (req, res) => {
+app.get("/post", (req, res) => {
+    res.sendFile(path.join(client, "post.html"));
+});
+
+app.get("/createpost", (req, res) => {
     res.sendFile(path.join(client, "createpost.html"));
 });
 
@@ -72,6 +72,10 @@ app.get("/examples/search", (req, res) => {
 
 app.get("/examples/chat", (req, res) => {
     res.sendFile(path.join(client, "page-examples", "chatpage-example.html"));
+});
+
+app.get("/components/carousel", (req, res) => {
+    res.sendFile(path.join(client, "Reusable-HTML/components", "carousel.html"));
 });
 
 app.use("/", sunnifyRouter);

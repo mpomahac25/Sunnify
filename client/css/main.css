@@ -1,18 +1,27 @@
+main {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background: #f8f9fa;
+}
+
 .img-holder {
-    background-color: blueviolet ;
+    background-color: blueviolet;
     border-radius: 1rem;
+    height: 200px;
 }
 
 .img-container.card {
-    border: none;
+    height: 100%;
+    border: 1px solid rgba(13, 109, 253, 0.07);
+    border-radius: 1rem;
+    background: #fff;
 }
 
 .favorite-btn {
     border: none;
 }
 
-main .card { border: none; }
-.createpost-page .card { border: none; }
 
 .card-footer { 
     border-top: none;

@@ -12,14 +12,13 @@
 .profile-avatar {
     width: 120px;
     height: 120px;
-    background: linear-gradient(135deg, #0d6efd, #6ea8fe);
+    background: linear-gradient(135deg, #aaafb5, #6ea8fe);
     box-shadow: 0 1rem 2rem rgba(13, 110, 253, 0.2);
 }
 
 .profile-stats .stat-card {
     height: 100%;
-    padding: 1rem;
-    border: 1px solid rgba(13, 110, 253, 0.12);
+    border: 1px solid rgba(13, 109, 253, 0.07);
     border-radius: 1rem;
     background: #fff;
 }
@@ -51,6 +50,14 @@
 
 .profile-card-media {
     height: 220px;
+}
+
+.carousel-container.profile-card-media {
+    background-color: #a855f7;
+    border-radius: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .review-card,
