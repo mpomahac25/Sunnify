@@ -81,7 +81,7 @@ form.addEventListener("submit", async (event) => {
             return;
         }
 
-        alert("Registration successful!");
+        //alert("Registration successful!");
 
         window.location.href = "main.html";
     } catch (error) {

@@ -36,7 +36,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                         return;
                     }
 
-                    alert("Logout successful!");
+                    //alert("Logout successful!");
 
                     window.location.href = "main.html";
                 } catch (error) {

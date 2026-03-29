@@ -98,7 +98,7 @@ form.addEventListener("submit", async (event) => {
             return;
         }
 
-        alert("Login successful!");
+        //alert("Login successful!");
 
         window.location.href = "main.html";
     } catch (error) {
