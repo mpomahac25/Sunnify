@@ -131,11 +131,11 @@ sunnifyRouter.post("/posts", isUserAuthenticated, async (req, res) => {
         // creating new post in db
         const result = await query(
             `INSERT INTO posts (title, description, price, location, category, condition, status, user_id)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8
-            RETURNING id)`,
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+            RETURNING id`,
             [title, description, parsedPrice, location, category, condition, status || "available", req.session.userId]
         );
-        result.status(201).json({ id: result.rows[0].id });
+        res.status(201).json({ id: result.rows[0].id });
     }catch (error){
         errorResponse(res, error)
     }
@@ -158,7 +158,7 @@ sunnifyRouter.get("/posts/:id", async (req, res) => {
             return res.status(404).json({ error: "Post not found" });
         }
 
-        res.status(200).json(result.rowss[0]);
+        res.status(200).json(result.rows[0]);
     } catch (error){
         errorResponse(res, error)
     }

@@ -1,10 +1,95 @@
-const BACKEND_ROOT_URL = "http://127.0.0.1:3000"
+(() => {
+    const POST_BACKEND_ROOT_URL = "http://127.0.0.1:3000";
 
-document.addEventListener("DOMContentLoaded", async () => {
-    const params = new URLSearchParams(window.location.search);
-    const postId = parseInt(params.get("id"));
+    document.addEventListener("DOMContentLoaded", async () => {
+        const params = new URLSearchParams(window.location.search);
+        const postId = parseInt(params.get("id"));
 
-    try{
+        if (Number.isNaN(postId)) {
+            renderMissingPost("Invalid post id.");
+            return;
+        }
 
-    }catch(error){}
-})
+        try {
+            const response = await fetch(`${POST_BACKEND_ROOT_URL}/posts/${postId}`, {
+                method: "get"
+            });
+
+            const result = await response.json();
+
+            if (!response.ok) {
+                renderMissingPost(result.error || "Post could not be loaded.");
+                return;
+            }
+
+            renderPost(result);
+        } catch (error) {
+            console.error(error);
+            renderMissingPost("Network error while loading post.");
+        }
+    });
+
+    const renderPost = (post) => {
+        setText("post-title", post.title);
+        setText("post-price", formatPrice(post.price));
+        setText("post-category", post.category);
+        setText("post-location", post.location);
+        setText("post-condition", `Condition: ${post.condition}`);
+        setText("post-created-at", formatCreatedAt(post.created_at));
+        setText("post-status", capitalize(post.status || "available"));
+        setText("post-description", post.description);
+
+        document.title = post.title ? `${post.title} | Sunnify` : "Post | Sunnify";
+    };
+
+    const renderMissingPost = (message) => {
+        setText("post-title", "Post unavailable");
+        setText("post-price", "-");
+        setText("post-category", "Unavailable");
+        setText("post-location", "Unknown location");
+        setText("post-condition", "Condition: Unknown");
+        setText("post-created-at", "Posted date unavailable");
+        setText("post-status", "Unavailable");
+        setText("post-description", message);
+    };
+
+    const setText = (id, value) => {
+        const element = document.getElementById(id);
+
+        if (element) {
+            element.textContent = value ?? "";
+        }
+    };
+
+    const formatPrice = (price) => {
+        const parsedPrice = Number(price);
+
+        if (Number.isNaN(parsedPrice)) {
+            return "Price unavailable";
+        }
+
+        return `${parsedPrice} EUR`;
+    };
+
+    const formatCreatedAt = (createdAt) => {
+        if (!createdAt) {
+            return "Posted date unavailable";
+        }
+
+        const date = new Date(createdAt);
+
+        if (Number.isNaN(date.getTime())) {
+            return "Posted date unavailable";
+        }
+
+        return `Posted ${date.toLocaleDateString()}`;
+    };
+
+    const capitalize = (value) => {
+        if (!value) {
+            return "";
+        }
+
+        return value.charAt(0).toUpperCase() + value.slice(1);
+    };
+})();
