@@ -1,0 +1,135 @@
+(() => {
+    const CREATE_POST_BACKEND_URL = "http://127.0.0.1:3000";
+
+    document.addEventListener("DOMContentLoaded", async () => {
+        // gets elems by ids
+        const form = document.querySelector(".createpost-form-card form");
+        const titleField = document.getElementById("listing-title");
+        const descriptionField = document.getElementById("listing-description");
+        const priceField = document.getElementById("listing-price");
+        const conditionField = document.getElementById("listing-condition");
+        const locationField = document.getElementById("listing-location");
+        const categoryField = document.getElementById("listing-category");
+        if (!form) {
+            return;
+        }
+
+        try {
+            //checks if user logged in
+            const sessionResponse = await fetch(`${CREATE_POST_BACKEND_URL}/check-session`, {
+                method: "get",
+                credentials: "include"
+            });
+
+            const sessionResult = await sessionResponse.json();
+
+            if (!sessionResult.loggedIn) {
+                window.location.href = "login.html";
+                return;
+            }
+        } catch (error) {
+            console.error(error);
+            alert("Could not verify session.");
+            return;
+        }
+
+        // when click btn clicked
+        form.addEventListener("submit", async (event) => {
+            event.preventDefault();
+
+            // takes values
+            const title = titleField.value.trim();
+            const description = descriptionField.value.trim();
+            const price = priceField.value.trim();
+            const condition = conditionField.value;
+            const location = locationField.value;
+            const category = categoryField.value;
+
+            //validation
+            const validationError = validateForm({
+                title,
+                description,
+                price,
+                condition,
+                location,
+                category
+            });
+
+            if (validationError) {
+                alert(validationError);
+                return;
+            }
+
+            // will be sent to backend
+            const payload = {
+                title,
+                description,
+                price: Number(price),
+                condition,
+                location,
+                category,
+                status: "available"
+            };
+
+            try {
+                // sends to /posts
+                const response = await fetch(`${CREATE_POST_BACKEND_URL}/posts`, {
+                    method: "post",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    credentials: "include",
+                    body: JSON.stringify(payload)
+                });
+
+                const result = await response.json();
+
+                //if not succesful
+                if (!response.ok) {
+                    alert(result.error || "Post creation failed.");
+                    return;
+                }
+
+                // succesful response
+                window.location.href = `post.html?id=${result.id}`;
+            } catch (error) {
+                console.error(error);
+                alert("Network error while creating post.");
+            }
+        });
+    });
+    // validation during user creating post
+    const validateForm = ({ title, description, price, condition, location, category }) => {
+        if (!title) {
+            return "Title is required.";
+        }
+
+        if (!description) {
+            return "Description is required.";
+        }
+
+        if (!price) {
+            return "Price is required.";
+        }
+
+        const parsedPrice = Number(price);
+
+        if (Number.isNaN(parsedPrice) || parsedPrice < 0) {
+            return "Price must be a valid non-negative number.";
+        }
+
+        if (!condition || condition === "Choose condition") {
+            return "Please choose a condition.";
+        }
+
+        if (!location || location === "Select location") {
+            return "Please choose a location.";
+        }
+
+        if (!category || category === "Select category") {
+            return "Please choose a category.";
+        }
+        // if no problems - returns null
+        return null;
+    };
+})();
