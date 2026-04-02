@@ -164,6 +164,16 @@ sunnifyRouter.get("/posts/:id", async (req, res) => {
     }
 })
 
+// GET posts
+sunnifyRouter.get("/posts", async (req, res) => { 
+    try {
+        const result = await query("SELECT id, title, price, location FROM posts ORDER BY created_at DESC;")
+
+        res.status(200).json(result.rows);
+    }catch (error) {
+        errorResponse(res, error)
+    }
+})
 // Search System
 
 sunnifyRouter.post("/search", async (req, res) => {

@@ -29,6 +29,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     try {
         // Load header
         const container = document.getElementById("header-container");
+        if (!container) return;
 
         const res = await fetch("/Reusable-HTML/components/header.html");
         const html = await res.text();
@@ -36,7 +37,10 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         // Set absolute href path(s)
         const navbarBrand = container.querySelector(".navbar-brand");
-        navbarBrand.setAttribute("href", `${BACKEND_ROOT_URL}`)
+        const createPostButton = container.querySelector("#createpost-btn");
+
+        navbarBrand.setAttribute("href", `${BACKEND_ROOT_URL}`);
+        createPostButton?.setAttribute("href", `${BACKEND_ROOT_URL}/createpost`);
 
         const response = await fetch(`${BACKEND_ROOT_URL}/check-session`, {
             method: "get",
@@ -48,6 +52,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         if (result.loggedIn) {
             // Change login button to logout button
             const loginLogoutButton = container.querySelector("#login-logout-btn");
+            createPostButton?.classList.remove("d-none");
 
             loginLogoutButton.textContent = "Logout";
 
