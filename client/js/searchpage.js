@@ -1,3 +1,6 @@
+const BACKEND_ROOT_URL = "http://127.0.0.1:3000";
+
+
 (function () {
     const resultsGrid = document.getElementById('resultsGrid');
     const resultsCount = document.getElementById('resultsCount');
