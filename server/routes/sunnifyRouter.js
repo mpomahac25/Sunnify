@@ -115,65 +115,96 @@ sunnifyRouter.post("/posts", isUserAuthenticated, async (req, res) => {
     try {
         const { title, description, price, location, category, condition, status } = req.body;
         
-        // if elements epmty
-        if (!title || !description || !location || !category || !condition){
-            return res.status(400).json({error: "Missing required fields"});
+        if (!title || !description || !location || !category || !condition) {
+            return res.status(400).json({ error: "Missing required fields" });
         }
 
-        // price = number
+        // price => number
         const parsedPrice = Number(price);
 
-        //if price is fucked
         if (Number.isNaN(parsedPrice) || parsedPrice < 0) {
-            return res.status(400).json({ error: "Invalid price"});
+            return res.status(400).json({ error: "Invalid price" });
         }
 
-        // creating new post in db
+        // make some variables from request acceptable for frontend (Marco I'm gonna kill u one day ~_~)
+        const normalizedCity = location.split(",")[0].trim();
+        const normalizedCategory = category === "Clothing" ? "Clothes" : category;
+        const normalizedCondition = condition === "Like new" ? "Excellent" : condition === "Used" ? "Acceptable" : condition;
+        const normalizedStatus = status ? status.charAt(0).toUpperCase() + status.slice(1).toLowerCase() : "Available";
+
+        // inserting all of this bullshit
         const result = await query(
-            `INSERT INTO posts (title, description, price, location, category, condition, status, user_id)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+            `INSERT INTO posts (title, description, price, city_id, category_id, subcategory_id, condition, status, user_id)
+            VALUES ($1, $2, $3, COALESCE((SELECT id FROM cities WHERE name = $4), 0), COALESCE((SELECT id FROM post_categories WHERE name = $5), 0), 0, COALESCE((SELECT id FROM post_condition WHERE condition = $6), 0), COALESCE((SELECT id FROM post_status WHERE status = $7), 0), $8)
             RETURNING id`,
-            [title, description, parsedPrice, location, category, condition, status || "available", req.session.userId]
+            [
+                title,
+                description,
+                parsedPrice,
+                normalizedCity,
+                normalizedCategory,
+                normalizedCondition,
+                normalizedStatus,
+                req.session.userId
+            ]
         );
         res.status(201).json({ id: result.rows[0].id });
-    }catch (error){
-        errorResponse(res, error)
+    } catch (error) {
+        errorResponse(res, error);
     }
-})
+});
 
-// GET exact post
+// GET exact post for postpage
 sunnifyRouter.get("/posts/:id", async (req, res) => {
-    try{
-        // get data
+    try {
         const id = parseInt(req.params.id);
         
-        // check data
+        // checking id
         if (Number.isNaN(id)) {
             return res.status(400).json({ error: "Invalid post id" });
         }
 
-        const result = await query("SELECT * FROM posts WHERE id = $1", [id]);
+        // selects all elems
+        const result = await query(
+            `SELECT p.id, p.title, p.description, p.price, c.name AS location, pc.name AS category, cond.condition AS condition, ps.status AS status, p.created_at FROM posts p
+            LEFT JOIN cities c ON c.id = p.city_id
+            LEFT JOIN post_categories pc ON pc.id = p.category_id
+            LEFT JOIN post_condition cond ON cond.id = p.condition
+            LEFT JOIN post_status ps ON ps.id = p.status
+            WHERE p.id = $1`,
+            [id]
+        );
 
+        // checks result
         if (result.rows.length === 0) {
             return res.status(404).json({ error: "Post not found" });
         }
 
         res.status(200).json(result.rows[0]);
-    } catch (error){
-        errorResponse(res, error)
+    } catch (error) {
+        errorResponse(res, error);
     }
-})
+});
 
-// GET posts
+// GET posts for any other pages
 sunnifyRouter.get("/posts", async (req, res) => { 
     try {
-        const result = await query("SELECT id, title, price, location FROM posts ORDER BY created_at DESC;")
+        const result = await query(
+            `SELECT
+                p.id,
+                p.title,
+                p.price,
+                c.name AS location
+            FROM posts p
+            LEFT JOIN cities c ON c.id = p.city_id
+            ORDER BY p.created_at DESC`
+        );
 
         res.status(200).json(result.rows);
-    }catch (error) {
-        errorResponse(res, error)
+    } catch (error) {
+        errorResponse(res, error);
     }
-})
+});
 // Search System
 
 sunnifyRouter.post("/search", async (req, res) => {
@@ -211,8 +242,8 @@ sunnifyRouter.post("/search", async (req, res) => {
 
 const errorResponse = (res, error) => {
     console.log(error);
-    res.statusMessage = error;
-    res.status(500).json({ error: error });
+    const errorMessage = typeof error === "string" ? error : error.message || "Internal server error";
+    res.status(500).json({ error: errorMessage });
 };
 
 module.exports = { sunnifyRouter };

@@ -14,19 +14,44 @@ searchForm.addEventListener("submit", async (event) => {
 });
 
 document.addEventListener("DOMContentLoaded", async () => {
-    const postsList = document.getElementById("posts-list")
+    const postsList = document.getElementById("posts-list");
 
+    //checks if posts-section is ok
     if (!postsList) {
         return;
     }
 
     try {
+        const response = await fetch(`${BACKEND_ROOT_URL}/posts`, {
+            method: "get"
+        });
 
+        const result = await response.json();
+
+        // validation section
+        if (!response.ok) {
+            postsList.innerHTML = `<p class="text-muted">Could not load posts.</p>`;
+            return;
+        }
+
+        if (result.length === 0) {
+            postsList.innerHTML = `<p class="text-muted">No posts available.</p>`;
+            return;
+        }
+
+        // cleans all example posts
+        postsList.innerHTML = "";
+
+        // adds data for each post
+        result.forEach(post => {
+            const postCard = createPostCard(post);
+            postsList.appendChild(postCard);
+        });
     } catch (error) {
         console.error(error);
-        postsList.innerHTML = `<p class="text-muted">Network error while loading posts </p>`
+        postsList.innerHTML = `<p class="text-muted">Network error while loading posts.</p>`;
     }
-})
+});
 
 const createPostCard = (post) => {
     const column = document.createElement("div");
@@ -38,21 +63,22 @@ const createPostCard = (post) => {
                 <div class="carousel-container"></div>
                 <div class="card-body">
                     <h5 class="card-title">${post.title}</h5>
-                    <p class="text-muted">${post.location}</p>
+                    <p class="text-muted">${post.location ?? "Unknown location"}</p>
                     <span class="fw-bold">${formatPrice(post.price)}</span>
                 </div>
             </div>
         </a>
     `;
-    // price parcing
-    const formatPrice = (price) => {
-        const parsedPrice = Number(price);
-        // checks price
-        if (Number.isNaN(parsedPrice)) {
-            return "Price unavailable"
-        }
 
-        return `${parsedPrice} €`
-    }
     return column;
+};
+// price => number
+const formatPrice = (price) => {
+    const parsedPrice = Number(price);
+
+    if (Number.isNaN(parsedPrice)) {
+        return "Price unavailable";
+    }
+
+    return `${parsedPrice} EUR`;
 };
