@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sunnify Profile</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="./../css/main.css">
+    <link rel="stylesheet" href="./../css/profile.css">
+</head>
+<body>
+    <main class="profile-page-example">
+        <div id="header-container"></div>
+
+        <section class="bg-light py-4 border-bottom">
+            <div class="container">
+                <div class="row g-4 align-items-stretch">
+                    <div class="col-12 col-lg-8">
+                        <div class="card border-0 h-100 profile-hero">
+                            <div class="card-body p-4 p-md-5">
+                                <div class="d-flex flex-column flex-md-row gap-4 align-items-md-center">
+                                    <div class="profile-avatar rounded-circle d-flex align-items-center justify-content-center flex-shrink-0">
+                                        <i class="bi bi-person fs-1 text-white"></i>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <div class="d-flex flex-column flex-md-row justify-content-md-between align-items-md-start gap-3">
+                                            <div>
+                                                <h1 class="h3 mb-2" id="profile-name">Joe Biden</h1>
+                                                <p class="text-muted mb-3">Blablabla blebleble.</p>
+                                            </div>
+                                            <button class="btn btn-outline-primary padding-bottom-6 mb-4">Edit Profile</button>
+                                        </div>
+                                        <div class="row g-3 profile-stats">
+                                            <div class="col-6 col-md-3">
+                                                <div class="stat-card">
+                                                    <div class="stat-value">4.9</div>
+                                                    <div class="stat-label">Rating</div>
+                                                </div>
+                                            </div>
+                                            <div class="col-6 col-md-3">
+                                                <div class="stat-card">
+                                                    <div class="stat-value">126</div>
+                                                    <div class="stat-label">Sales</div>
+                                                </div>
+                                            </div>
+                                            <div class="col-6 col-md-3">
+                                                <div class="stat-card">
+                                                    <div class="stat-value">38</div>
+                                                    <div class="stat-label">Saved items</div>
+                                                </div>
+                                            </div>
+                                            <div class="col-6 col-md-3">
+                                                <div class="stat-card">
+                                                    <div class="stat-value">2026</div>
+                                                    <div class="stat-label">Member since</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-12 col-lg-4">
+                        <div class="card border-0 h-100">
+                            <div class="card-body p-4">
+                                <h2 class="h5 mb-3">Profile Details</h2>
+                                <ul class="list-unstyled mb-0 d-grid gap-3">
+                                    <li class="d-flex align-items-center gap-3">
+                                        <i class="bi bi-geo-alt text-primary"></i>
+                                        <span>Oulu, Tuira</span>
+                                    </li>
+                                    <li class="d-flex align-items-center gap-3">
+                                        <i class="bi bi-heart text-primary"></i>
+                                        <span>38 saved items</span>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="py-4">
+            <div class="container">
+                <ul class="nav nav-pills profile-menu justify-content-center gap-2 mb-4">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="#saved-items">Saved items</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#reviews">Reviews</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#listings">Listings</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#settings">Settings</a>
+                    </li>
+                </ul>
+
+                <section id="saved-items" class="mb-5">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div>
+                            <h2 class="h4 mb-1">Saved Items</h2>
+                            <p class="text-muted mb-0">Items you liked, styled to match the homepage cards.</p>
+                        </div>
+                        <button class="btn btn-outline-secondary btn-sm">View all</button>
+                    </div>
+                    <div class="row g-4">
+                        <div class="col-12 col-sm-6 col-lg-4">
+                            <div class="img-container card h-100">
+                                <div class="carousel-container"></div>
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between gap-3">
+                                        <div>
+                                            <h3 class="h6 card-title mb-1">Summer Sandals</h3>
+                                            <p class="text-muted mb-2">Oulu, Tuira</p>
+                                        </div>
+                                    </div>
+                                    <span class="fw-bold">10 EUR</span>
+                                </div>
+                                <div class="card-footer d-flex justify-content-between align-items-center">
+                                    <small class="text-muted">Added 2 days ago</small>
+                                    <button class="favorite-btn btn btn-outline-danger btn-sm">
+                                        <i class="bi bi-heart fs-4"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-12 col-sm-6 col-lg-4">
+                            <div class="img-container card h-100">
+                                <div class="carousel-container"></div>
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between gap-3">
+                                        <div>
+                                            <h3 class="h6 card-title mb-1">Woven Bag</h3>
+                                            <p class="text-muted mb-2">Oulu, Keskusta</p>
+                                        </div>
+                                    </div>
+                                    <span class="fw-bold">18 EUR</span>
+                                </div>
+                                <div class="card-footer d-flex justify-content-between align-items-center">
+                                    <small class="text-muted">Added this week</small>
+                                    <button class="favorite-btn btn btn-outline-danger btn-sm">
+                                        <i class="bi bi-heart fs-4"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-12 col-sm-6 col-lg-4">
+                            <div class="img-container card h-100">
+                                <div class="carousel-container"></div>
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between gap-3">
+                                        <div>
+                                            <h3 class="h6 card-title mb-1">Desk Lamp</h3>
+                                            <p class="text-muted mb-2">Oulu, Alppila</p>
+                                        </div>
+                                    </div>
+                                    <span class="fw-bold">22 EUR</span>
+                                </div>
+                                <div class="card-footer d-flex justify-content-between align-items-center">
+                                    <small class="text-muted">Added today</small>
+                                    <button class="favorite-btn btn btn-outline-danger btn-sm">
+                                        <i class="bi bi-heart fs-4"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="reviews" class="mb-5">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div>
+                            <h2 class="h4 mb-1">Reviews</h2>
+                            <p class="text-muted mb-0">Recent buyer feedback in a clean card layout.</p>
+                        </div>
+                        <button class="btn btn-outline-secondary btn-sm">See more</button>
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <article class="card border-0 review-card">
+                                <div class="card-body p-4 d-flex flex-column flex-md-row gap-3">
+                                    <div class="review-avatar rounded-circle d-flex align-items-center justify-content-center">
+                                        <i class="bi bi-person"></i>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <div class="d-flex flex-column flex-md-row justify-content-md-between gap-2 mb-2">
+                                            <div>
+                                                <h3 class="h6 mb-1">Aino M.</h3>
+                                                <div class="text-warning small">
+                                                    <i class="bi bi-star-fill"></i>
+                                                    <i class="bi bi-star-fill"></i>
+                                                    <i class="bi bi-star-fill"></i>
+                                                    <i class="bi bi-star-fill"></i>
+                                                    <i class="bi bi-star-fill"></i>
+                                                </div>
+                                            </div>
+                                            <small class="text-muted">March 2026</small>
+                                        </div>
+                                        <p class="mb-0 text-muted">Fast communication, item matched the photos perfectly, and pickup was easy to arrange.</p>
+                                    </div>
+                                </div>
+                            </article>
+                        </div>
+                        <div class="col-12">
+                            <article class="card border-0 review-card">
+                                <div class="card-body p-4 d-flex flex-column flex-md-row gap-3">
+                                    <div class="review-avatar rounded-circle d-flex align-items-center justify-content-center">
+                                        <i class="bi bi-person"></i>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <div class="d-flex flex-column flex-md-row justify-content-md-between gap-2 mb-2">
+                                            <div>
+                                                <h3 class="h6 mb-1">Leo T.</h3>
+                                                <div class="text-warning small">
+                                                    <i class="bi bi-star-fill"></i>
+                                                    <i class="bi bi-star-fill"></i>
+                                                    <i class="bi bi-star-fill"></i>
+                                                    <i class="bi bi-star-fill"></i>
+                                                    <i class="bi bi-star-half"></i>
+                                                </div>
+                                            </div>
+                                            <small class="text-muted">February 2026</small>
+                                        </div>
+                                        <p class="mb-0 text-muted">Friendly seller and super smooth deal. Would absolutely buy again.</p>
+                                    </div>
+                                </div>
+                            </article>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="listings" class="mb-5">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div>
+                            <h2 class="h4 mb-1">Active Listings</h2>
+                            <p class="text-muted mb-0">Public items with the same card rhythm as the homepage catalog.</p>
+                        </div>
+                        <button class="btn btn-outline-secondary btn-sm">View all</button>
+                    </div>
+                    <div class="row g-4">
+                        <div class="col-12 col-md-6 col-xl-4">
+                            <div class="img-container card h-100">
+                                <div class="carousel-container"></div>
+                                <div class="card-body">
+                                    <h3 class="h6 card-title mb-1">Denim Jacket</h3>
+                                    <p class="text-muted mb-2">Oulu, Tuira</p>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span class="fw-bold">25 EUR</span>
+
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-12 col-md-6 col-xl-4"> 
+                            <div class="img-container card h-100">
+                                <div class="carousel-container"></div>
+                                <div class="card-body">
+                                    <h3 class="h6 card-title mb-1">Ceramic Vase</h3>
+                                    <p class="text-muted mb-2">Oulu, Heinapaa</p>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span class="fw-bold">14 EUR</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-12 col-md-6 col-xl-4">
+                            <div class="img-container card h-100">
+                                <div class="carousel-container"></div>
+                                <div class="card-body">
+                                    <h3 class="h6 card-title mb-1">Kids Scooter</h3>
+                                    <p class="text-muted mb-2">Oulu, Karjasilta</p>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span class="fw-bold">30 EUR</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="settings">
+                    <div class="card border-0">
+                        <div class="card-body p-4">
+                            <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3">
+                                <div>
+                                    <h2 class="h4 mb-1">Settings</h2>
+                                </div>
+                                <div class="d-flex flex-wrap gap-2">
+                                    <button class="btn btn-primary">Manage settings...</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </section>
+
+    </main>
+
+    <div id="footer-container"></div>
+
+    <script src="./../Reusable-HTML/components/headerLoader.js"></script>
+    <script src="./../Reusable-HTML/components/footerLoader.js"></script>
+    <script src="./../Reusable-HTML/components/carouselLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

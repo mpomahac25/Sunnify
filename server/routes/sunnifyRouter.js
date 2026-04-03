@@ -190,12 +190,8 @@ sunnifyRouter.get("/posts/:id", async (req, res) => {
 sunnifyRouter.get("/posts", async (req, res) => { 
     try {
         const result = await query(
-            `SELECT
-                p.id,
-                p.title,
-                p.price,
-                c.name AS location
-            FROM posts p
+            `
+            SELECT p.id, p.title, p.price, c.name AS location FROM posts p
             LEFT JOIN cities c ON c.id = p.city_id
             ORDER BY p.created_at DESC`
         );
@@ -205,6 +201,16 @@ sunnifyRouter.get("/posts", async (req, res) => {
         errorResponse(res, error);
     }
 });
+
+// profile related API
+
+//get exact profile
+
+sunnifyRouter.get("/profiles/:id", async (req, res) => {
+    const result = await query(`
+        SELECT user
+        `)
+})
 // Search System
 
 sunnifyRouter.post("/search", async (req, res) => {

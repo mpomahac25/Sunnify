@@ -52,6 +52,10 @@ app.get("/createpost", (req, res) => {
     res.sendFile(path.join(client, "createpost.html"));
 });
 
+app.get("/profile", (req,res) => {
+    res.sendFile(path.join(client, "profile.html"));
+})
+
 //examples
 
 app.get("/examples/search", (req, res) => {

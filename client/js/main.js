@@ -47,6 +47,10 @@ document.addEventListener("DOMContentLoaded", async () => {
             const postCard = createPostCard(post);
             postsList.appendChild(postCard);
         });
+
+        if (typeof window.loadCarousels === "function") {
+            await window.loadCarousels(postsList);
+        }
     } catch (error) {
         console.error(error);
         postsList.innerHTML = `<p class="text-muted">Network error while loading posts.</p>`;
