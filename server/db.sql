@@ -10,7 +10,8 @@ CREATE TABLE users (
 	email VARCHAR(255) NOT NULL UNIQUE CHECK (email LIKE '%@%'),
 	password_hash VARCHAR(255) NOT NULL,
 	created_at TIMESTAMPTZ DEFAULT NOW(),
-	last_login TIMESTAMPTZ DEFAULT NOW()
+	last_login TIMESTAMPTZ DEFAULT NOW(),
+	posts_count INT CHECK (price >= 0)
 );
 
 CREATE TABLE post_categories (

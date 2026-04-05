@@ -19,7 +19,6 @@ const preventAuthAccess = (req, res, next) => {
     next();
 };
 
-
 // Routes handling
 sunnifyRouter.post("/register", preventAuthAccess, async (req, res) => {
     try {
@@ -206,10 +205,23 @@ sunnifyRouter.get("/posts", async (req, res) => {
 
 //get exact profile
 
-sunnifyRouter.get("/profiles/:id", async (req, res) => {
+sunnifyRouter.get("/users/:id", async (req, res) => {
+    const id = parseInt(req.params.id)
+
+    if (Number.isNaN(id)) {
+            return res.status(400).json({ error: "Invalid profile id" });
+        }
+    
     const result = await query(`
-        SELECT user
+        SELECT id, username, created_at, posts_count FROM users
         `)
+})
+
+// get user listings
+sunnifyRouter.get("/users/listings", async (req,res) => {
+    const result = await query(`
+        SELECT  p.id, p.title, p.price, c.name AS location FROM posts p
+    `)
 })
 // Search System
 
