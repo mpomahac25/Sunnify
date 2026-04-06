@@ -108,6 +108,34 @@ sunnifyRouter.get("/check-session", (req, res) => {
     else res.status(200).json({ loggedIn: false, userId: null });
 });
 
+sunnifyRouter.get("/locations", async (req, res) => {
+    // Fetch countries, regions, and cities lists
+    let result = await query("SELECT id, name FROM countries ORDER BY name ASC");
+    const countries = result.rows;
+
+    result = await query("SELECT id, name, country_id FROM regions ORDER BY name ASC");
+    const regions = result.rows;
+
+    result = await query("SELECT id, name, region_id FROM cities ORDER BY name ASC");
+    const cities = result.rows;
+
+    // Build structured JSON
+    const locationData = countries.map(country => ({
+        id: country.id,
+        country: country.name,
+        regions: regions.filter(region => region.country_id === country.id).map(region => ({
+            id: region.id,
+            region: region.name,
+            cities: cities.filter(city => city.region_id === region.id).map(city => ({
+                id: city.id,
+                city: city.name
+            }))
+        }))
+    }));
+
+    res.status(200).json(locationData);
+});
+
 // post-related API
 
 // create post
@@ -127,6 +155,7 @@ sunnifyRouter.post("/posts", isUserAuthenticated, async (req, res) => {
         }
 
         // make some variables from request acceptable for frontend (Marco I'm gonna kill u one day ~_~)
+        // Mimimimimi stop being a wuss (also learn how to spell my name VaDUMB)
         const normalizedCity = location.split(",")[0].trim();
         const normalizedCategory = category === "Clothing" ? "Clothes" : category;
         const normalizedCondition = condition === "Like new" ? "Excellent" : condition === "Used" ? "Acceptable" : condition;
