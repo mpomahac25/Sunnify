@@ -1,3 +1,5 @@
+import { createPostCard } from "../Reusable-HTML/components/postCard.js";
+
 const BACKEND_ROOT_URL = "http://127.0.0.1:3000";
 
 const searchForm = document.getElementById("search-form");
@@ -44,8 +46,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         // adds data for each post
         result.forEach(post => {
-            const postCard = createPostCard(post);
-            postsList.appendChild(postCard);
+            postsList.appendChild(createPostCard(post));
         });
 
         if (typeof window.loadCarousels === "function") {
@@ -56,33 +57,3 @@ document.addEventListener("DOMContentLoaded", async () => {
         postsList.innerHTML = `<p class="text-muted">Network error while loading posts.</p>`;
     }
 });
-
-const createPostCard = (post) => {
-    const column = document.createElement("div");
-    column.className = "col-6 col-md-6 col-lg-4";
-
-    column.innerHTML = `
-        <a href="post.html?id=${post.id}" class="text-decoration-none text-dark">
-            <div class="img-container card h-100">
-                <div class="carousel-container"></div>
-                <div class="card-body">
-                    <h5 class="card-title">${post.title}</h5>
-                    <p class="text-muted">${post.location ?? "Unknown location"}</p>
-                    <span class="fw-bold">${formatPrice(post.price)}</span>
-                </div>
-            </div>
-        </a>
-    `;
-
-    return column;
-};
-// price => number
-const formatPrice = (price) => {
-    const parsedPrice = Number(price);
-
-    if (Number.isNaN(parsedPrice)) {
-        return "Price unavailable";
-    }
-
-    return `${parsedPrice} EUR`;
-};

@@ -204,24 +204,50 @@ sunnifyRouter.get("/posts", async (req, res) => {
 // profile related API
 
 //get exact profile
-
 sunnifyRouter.get("/users/:id", async (req, res) => {
-    const id = parseInt(req.params.id)
+    try {
+        const id = parseInt(req.params.id)
 
-    if (Number.isNaN(id)) {
+        if (Number.isNaN(id)) {
             return res.status(400).json({ error: "Invalid profile id" });
         }
-    
-    const result = await query(`
-        SELECT id, username, created_at, posts_count FROM users
-        `)
+
+        const result = await query(`
+            SELECT u.id, u.username, u.created_at, COUNT(p.id) AS posts_count FROM users u
+            LEFT JOIN posts p ON p.user_id = u.id WHERE u.id = $1
+            GROUP BY u.id, u.username, u.created_at;
+            `, [id])
+        
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: "User not found" });
+        }
+
+        res.status(200).json(result.rows[0]);
+    } catch (error) {
+        errorResponse(res, error)
+    }
 })
 
 // get user listings
-sunnifyRouter.get("/users/listings", async (req,res) => {
-    const result = await query(`
-        SELECT  p.id, p.title, p.price, c.name AS location FROM posts p
-    `)
+sunnifyRouter.get("/users/:id/posts", async (req,res) => {
+    try {
+        const id = parseInt(req.params.id)
+
+        if (Number.isNaN(id)) {
+                return res.status(400).json({ error: "Invalid profile id" });
+        }
+
+        const result = await query(`
+            SELECT  p.id, p.title, p.price, c.name AS location FROM posts p
+            LEFT JOIN cities c ON c.id = p.city_id WHERE p.user_id = $1
+            ORDER BY p.created_at DESC;`, 
+            [id]
+        )
+
+        res.status(200).json(result.rows);
+    } catch(error) {
+        errorResponse(res, error)
+    }
 })
 // Search System
 
