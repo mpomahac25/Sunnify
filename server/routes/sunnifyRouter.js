@@ -19,7 +19,6 @@ const preventAuthAccess = (req, res, next) => {
     next();
 };
 
-
 // Routes handling
 sunnifyRouter.post("/register", preventAuthAccess, async (req, res) => {
     try {
@@ -219,12 +218,8 @@ sunnifyRouter.get("/posts/:id", async (req, res) => {
 sunnifyRouter.get("/posts", async (req, res) => { 
     try {
         const result = await query(
-            `SELECT
-                p.id,
-                p.title,
-                p.price,
-                c.name AS location
-            FROM posts p
+            `
+            SELECT p.id, p.title, p.price, c.name AS location FROM posts p
             LEFT JOIN cities c ON c.id = p.city_id
             ORDER BY p.created_at DESC`
         );
@@ -234,6 +229,55 @@ sunnifyRouter.get("/posts", async (req, res) => {
         errorResponse(res, error);
     }
 });
+
+// profile related API
+
+//get exact profile
+sunnifyRouter.get("/users/:id", async (req, res) => {
+    try {
+        const id = parseInt(req.params.id)
+
+        if (Number.isNaN(id)) {
+            return res.status(400).json({ error: "Invalid profile id" });
+        }
+
+        const result = await query(`
+            SELECT u.id, u.username, u.created_at, COUNT(p.id) AS posts_count FROM users u
+            LEFT JOIN posts p ON p.user_id = u.id WHERE u.id = $1
+            GROUP BY u.id, u.username, u.created_at;
+            `, [id])
+        
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: "User not found" });
+        }
+
+        res.status(200).json(result.rows[0]);
+    } catch (error) {
+        errorResponse(res, error)
+    }
+})
+
+// get user listings
+sunnifyRouter.get("/users/:id/posts", async (req,res) => {
+    try {
+        const id = parseInt(req.params.id)
+
+        if (Number.isNaN(id)) {
+                return res.status(400).json({ error: "Invalid profile id" });
+        }
+
+        const result = await query(`
+            SELECT  p.id, p.title, p.price, c.name AS location FROM posts p
+            LEFT JOIN cities c ON c.id = p.city_id WHERE p.user_id = $1
+            ORDER BY p.created_at DESC;`, 
+            [id]
+        )
+
+        res.status(200).json(result.rows);
+    } catch(error) {
+        errorResponse(res, error)
+    }
+})
 // Search System
 
 sunnifyRouter.post("/search", async (req, res) => {
@@ -268,6 +312,106 @@ sunnifyRouter.post("/search", async (req, res) => {
 //    }
 //})
 */
+
+// Check if conversation exists between 2 users, if not, create it and returns conversationId
+sunnifyRouter.post("/conversations/check-or-create", isUserAuthenticated, async (req, res) => {
+    try {
+        const user1 = Number(req.body.user1);
+        const user2 = Number(req.body.user2);
+        const sessionUser = req.session.userId;
+
+        if (Number.isNaN(user1) || Number.isNaN(user2)) {
+            return res.status(400).json({ error: "Invalid user ids" });
+        }
+
+        if (sessionUser !== user1 && sessionUser !== user2) {
+            return res.status(403).json({ error: "Forbidden: session user not part of this conversation" });
+        }
+
+        const result = await query(
+            `SELECT id FROM conversations
+            WHERE (user1_id = $1 AND user2_id = $2) OR (user1_id = $2 AND user2_id = $1)
+            LIMIT 1`,
+            [user1, user2]
+        );
+
+        if (result.rows.length > 0) {
+            return res.status(200).json({ conversationId: result.rows[0].id });
+        }
+
+        const user1ForInsert = sessionUser;
+        const user2ForInsert = sessionUser === user1 ? user2 : user1;
+
+        const insertResult = await query(
+            `INSERT INTO conversations (user1_id, user2_id) VALUES ($1, $2) RETURNING id`,
+            [user1ForInsert, user2ForInsert]
+        );
+
+        return res.status(201).json({ conversationId: insertResult.rows[0].id });
+    } catch (error) {
+        errorResponse(res, error);
+    }
+});
+
+// Get that returns the messages of a conversation
+sunnifyRouter.get("/conversations/:id/messages", isUserAuthenticated, async (req, res) => {
+    try {
+        const convId = Number(req.params.id);
+        if (Number.isNaN(convId)) return res.status(400).json({ error: "Invalid conversation id" });
+
+        const convRes = await query("SELECT user1_id, user2_id FROM conversations WHERE id = $1", [convId]);
+        if (convRes.rows.length === 0) return res.status(404).json({ error: "Conversation not found" });
+
+        const { user1_id, user2_id } = convRes.rows[0];
+        const sessionUser = req.session.userId;
+        if (user1_id !== sessionUser && user2_id !== sessionUser) {
+            return res.status(403).json({ error: "Forbidden: not part of this conversation" });
+        }
+
+        const messagesRes = await query(
+            `SELECT id, conversation_id, sender_id, receiver_id, content, sent_at
+            FROM messages
+            WHERE conversation_id = $1
+            ORDER BY sent_at ASC`,
+            [convId]
+        );
+
+        res.status(200).json(messagesRes.rows);
+    } catch (error) {
+        errorResponse(res, error);
+    }
+});
+
+// Insert a new message, returns id and sent_at
+sunnifyRouter.post("/conversations/:id/messages", isUserAuthenticated, async (req, res) => {
+    try {
+        const convId = Number(req.params.id);
+        const content = (req.body.content || "").trim();
+        if (Number.isNaN(convId)) return res.status(400).json({ error: "Invalid conversation id" });
+        if (!content) return res.status(400).json({ error: "Message content required" });
+
+        const convRes = await query("SELECT user1_id, user2_id FROM conversations WHERE id = $1", [convId]);
+        if (convRes.rows.length === 0) return res.status(404).json({ error: "Conversation not found" });
+
+        const { user1_id, user2_id } = convRes.rows[0];
+        const senderId = req.session.userId;
+        if (senderId !== user1_id && senderId !== user2_id) {
+            return res.status(403).json({ error: "Forbidden: not part of this conversation" });
+        }
+
+        const receiverId = senderId === user1_id ? user2_id : user1_id;
+
+        const insertRes = await query(
+            `INSERT INTO messages (conversation_id, sender_id, receiver_id, content)
+            VALUES ($1, $2, $3, $4) RETURNING id, sent_at`,
+            [convId, senderId, receiverId, content]
+        );
+
+        res.status(201).json({ id: insertRes.rows[0].id, sent_at: insertRes.rows[0].sent_at });
+    } catch (error) {
+        errorResponse(res, error);
+    }
+});
 
 const errorResponse = (res, error) => {
     console.log(error);
