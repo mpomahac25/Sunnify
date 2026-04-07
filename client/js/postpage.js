@@ -15,7 +15,7 @@
         try {
             //response to server
             const response = await fetch(`${POST_BACKEND_ROOT_URL}/posts/${postId}`, {
-                method: "get"
+                method: "get",
             });
 
             const result = await response.json();
@@ -44,6 +44,18 @@
         setText("post-description", post.description);
 
         document.title = post.title ? `${post.title} | Sunnify` : "Post | Sunnify";
+
+        // mostrar nombre del vendedor (viene de la API después del cambio)
+        setText("seller-name", post.seller_username || "Seller");
+
+        // añadir comportamiento al botón "Contact seller"
+        const contactBtn = document.querySelector(".post-details-card .btn.btn-primary");
+        if (contactBtn) {
+            contactBtn.addEventListener("click", () => {
+                // redirige a la página de chat pasando sellerId en la URL
+                window.location.href = `/page-examples/chatpage-example.html?sellerId=${post.seller_id}`;
+            });
+        }
     };
 
     // if data not found

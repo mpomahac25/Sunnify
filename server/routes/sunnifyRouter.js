@@ -26,11 +26,10 @@ sunnifyRouter.post("/register", preventAuthAccess, async (req, res) => {
         let result = await query("SELECT * FROM users");
         let rows = result.rows ? result.rows : [];
 
-        if (rows.some(row => row.username === req.body.username)) {
+        if (rows.some((row) => row.username === req.body.username)) {
             res.status(409).json({ error: "Username already exists!" });
             return;
-        }
-        else if (rows.some(row => row.email === req.body.email)) {
+        } else if (rows.some((row) => row.email === req.body.email)) {
             res.status(409).json({ error: "Email already in use!" });
             return;
         }
@@ -41,12 +40,10 @@ sunnifyRouter.post("/register", preventAuthAccess, async (req, res) => {
         const pwEncrypted = await encryptPassword(req.body.password);
 
         // Create new user in database
-        result = await query("INSERT INTO users (username, email, password_hash) VALUES ($1, $2, $3) RETURNING id",
-            [
-                req.body.username,
-                req.body.email,
-                pwEncrypted
-            ]);
+        result = await query(
+            "INSERT INTO users (username, email, password_hash) VALUES ($1, $2, $3) RETURNING id",
+            [req.body.username, req.body.email, pwEncrypted],
+        );
         res.status(200).json({ id: result.rows[0].id });
     } catch (error) {
         errorResponse(res, error);
@@ -95,7 +92,7 @@ sunnifyRouter.post("/login", preventAuthAccess, async (req, res) => {
 });
 
 sunnifyRouter.post("/logout", (req, res) => {
-    req.session.destroy(err => {
+    req.session.destroy((err) => {
         if (err) errorResponse(res, "Logout failed");
         res.clearCookie("connect.sid");
         res.status(200).json({ message: "Logout success" });
@@ -119,17 +116,21 @@ sunnifyRouter.get("/locations", async (req, res) => {
     const cities = result.rows;
 
     // Build structured JSON
-    const locationData = countries.map(country => ({
+    const locationData = countries.map((country) => ({
         id: country.id,
         country: country.name,
-        regions: regions.filter(region => region.country_id === country.id).map(region => ({
-            id: region.id,
-            region: region.name,
-            cities: cities.filter(city => city.region_id === region.id).map(city => ({
-                id: city.id,
-                city: city.name
-            }))
-        }))
+        regions: regions
+            .filter((region) => region.country_id === country.id)
+            .map((region) => ({
+                id: region.id,
+                region: region.name,
+                cities: cities
+                    .filter((city) => city.region_id === region.id)
+                    .map((city) => ({
+                        id: city.id,
+                        city: city.name,
+                    })),
+            })),
     }));
 
     res.status(200).json(locationData);
@@ -141,7 +142,7 @@ sunnifyRouter.get("/locations", async (req, res) => {
 sunnifyRouter.post("/posts", isUserAuthenticated, async (req, res) => {
     try {
         const { title, description, price, location, category, condition, status } = req.body;
-        
+
         if (!title || !description || !location || !category || !condition) {
             return res.status(400).json({ error: "Missing required fields" });
         }
@@ -157,8 +158,15 @@ sunnifyRouter.post("/posts", isUserAuthenticated, async (req, res) => {
         // Mimimimimi stop being a wuss (also learn how to spell my name VaDUMB)
         const normalizedCity = location.split(",")[0].trim();
         const normalizedCategory = category === "Clothing" ? "Clothes" : category;
-        const normalizedCondition = condition === "Like new" ? "Excellent" : condition === "Used" ? "Acceptable" : condition;
-        const normalizedStatus = status ? status.charAt(0).toUpperCase() + status.slice(1).toLowerCase() : "Available";
+        const normalizedCondition =
+            condition === "Like new"
+                ? "Excellent"
+                : condition === "Used"
+                  ? "Acceptable"
+                  : condition;
+        const normalizedStatus = status
+            ? status.charAt(0).toUpperCase() + status.slice(1).toLowerCase()
+            : "Available";
 
         // inserting all of this bullshit
         const result = await query(
@@ -173,8 +181,8 @@ sunnifyRouter.post("/posts", isUserAuthenticated, async (req, res) => {
                 normalizedCategory,
                 normalizedCondition,
                 normalizedStatus,
-                req.session.userId
-            ]
+                req.session.userId,
+            ],
         );
         res.status(201).json({ id: result.rows[0].id });
     } catch (error) {
@@ -186,7 +194,7 @@ sunnifyRouter.post("/posts", isUserAuthenticated, async (req, res) => {
 sunnifyRouter.get("/posts/:id", async (req, res) => {
     try {
         const id = parseInt(req.params.id);
-        
+
         // checking id
         if (Number.isNaN(id)) {
             return res.status(400).json({ error: "Invalid post id" });
@@ -194,13 +202,16 @@ sunnifyRouter.get("/posts/:id", async (req, res) => {
 
         // selects all elems
         const result = await query(
-            `SELECT p.id, p.title, p.description, p.price, c.name AS location, pc.name AS category, cond.condition AS condition, ps.status AS status, p.created_at FROM posts p
+            `SELECT p.id, p.title, p.description, p.price, p.user_id AS seller_id, u.username AS seller_username,
+            c.name AS location, pc.name AS category, cond.condition AS condition, ps.status AS status, p.created_at
+            FROM posts p
+            LEFT JOIN users u ON u.id = p.user_id
             LEFT JOIN cities c ON c.id = p.city_id
             LEFT JOIN post_categories pc ON pc.id = p.category_id
             LEFT JOIN post_condition cond ON cond.id = p.condition
             LEFT JOIN post_status ps ON ps.id = p.status
             WHERE p.id = $1`,
-            [id]
+            [id],
         );
 
         // checks result
@@ -215,13 +226,13 @@ sunnifyRouter.get("/posts/:id", async (req, res) => {
 });
 
 // GET posts for any other pages
-sunnifyRouter.get("/posts", async (req, res) => { 
+sunnifyRouter.get("/posts", async (req, res) => {
     try {
         const result = await query(
             `
             SELECT p.id, p.title, p.price, c.name AS location FROM posts p
             LEFT JOIN cities c ON c.id = p.city_id
-            ORDER BY p.created_at DESC`
+            ORDER BY p.created_at DESC`,
         );
 
         res.status(200).json(result.rows);
@@ -235,49 +246,53 @@ sunnifyRouter.get("/posts", async (req, res) => {
 //get exact profile
 sunnifyRouter.get("/users/:id", async (req, res) => {
     try {
-        const id = parseInt(req.params.id)
+        const id = parseInt(req.params.id);
 
         if (Number.isNaN(id)) {
             return res.status(400).json({ error: "Invalid profile id" });
         }
 
-        const result = await query(`
+        const result = await query(
+            `
             SELECT u.id, u.username, u.created_at, COUNT(p.id) AS posts_count FROM users u
             LEFT JOIN posts p ON p.user_id = u.id WHERE u.id = $1
             GROUP BY u.id, u.username, u.created_at;
-            `, [id])
-        
+            `,
+            [id],
+        );
+
         if (result.rows.length === 0) {
             return res.status(404).json({ error: "User not found" });
         }
 
         res.status(200).json(result.rows[0]);
     } catch (error) {
-        errorResponse(res, error)
+        errorResponse(res, error);
     }
-})
+});
 
 // get user listings
-sunnifyRouter.get("/users/:id/posts", async (req,res) => {
+sunnifyRouter.get("/users/:id/posts", async (req, res) => {
     try {
-        const id = parseInt(req.params.id)
+        const id = parseInt(req.params.id);
 
         if (Number.isNaN(id)) {
-                return res.status(400).json({ error: "Invalid profile id" });
+            return res.status(400).json({ error: "Invalid profile id" });
         }
 
-        const result = await query(`
+        const result = await query(
+            `
             SELECT  p.id, p.title, p.price, c.name AS location FROM posts p
             LEFT JOIN cities c ON c.id = p.city_id WHERE p.user_id = $1
-            ORDER BY p.created_at DESC;`, 
-            [id]
-        )
+            ORDER BY p.created_at DESC;`,
+            [id],
+        );
 
         res.status(200).json(result.rows);
-    } catch(error) {
-        errorResponse(res, error)
+    } catch (error) {
+        errorResponse(res, error);
     }
-})
+});
 // Search System
 
 sunnifyRouter.post("/search", async (req, res) => {
@@ -325,14 +340,16 @@ sunnifyRouter.post("/conversations/check-or-create", isUserAuthenticated, async 
         }
 
         if (sessionUser !== user1 && sessionUser !== user2) {
-            return res.status(403).json({ error: "Forbidden: session user not part of this conversation" });
+            return res
+                .status(403)
+                .json({ error: "Forbidden: session user not part of this conversation" });
         }
 
         const result = await query(
             `SELECT id FROM conversations
             WHERE (user1_id = $1 AND user2_id = $2) OR (user1_id = $2 AND user2_id = $1)
             LIMIT 1`,
-            [user1, user2]
+            [user1, user2],
         );
 
         if (result.rows.length > 0) {
@@ -344,7 +361,7 @@ sunnifyRouter.post("/conversations/check-or-create", isUserAuthenticated, async 
 
         const insertResult = await query(
             `INSERT INTO conversations (user1_id, user2_id) VALUES ($1, $2) RETURNING id`,
-            [user1ForInsert, user2ForInsert]
+            [user1ForInsert, user2ForInsert],
         );
 
         return res.status(201).json({ conversationId: insertResult.rows[0].id });
@@ -359,8 +376,11 @@ sunnifyRouter.get("/conversations/:id/messages", isUserAuthenticated, async (req
         const convId = Number(req.params.id);
         if (Number.isNaN(convId)) return res.status(400).json({ error: "Invalid conversation id" });
 
-        const convRes = await query("SELECT user1_id, user2_id FROM conversations WHERE id = $1", [convId]);
-        if (convRes.rows.length === 0) return res.status(404).json({ error: "Conversation not found" });
+        const convRes = await query("SELECT user1_id, user2_id FROM conversations WHERE id = $1", [
+            convId,
+        ]);
+        if (convRes.rows.length === 0)
+            return res.status(404).json({ error: "Conversation not found" });
 
         const { user1_id, user2_id } = convRes.rows[0];
         const sessionUser = req.session.userId;
@@ -373,7 +393,7 @@ sunnifyRouter.get("/conversations/:id/messages", isUserAuthenticated, async (req
             FROM messages
             WHERE conversation_id = $1
             ORDER BY sent_at ASC`,
-            [convId]
+            [convId],
         );
 
         res.status(200).json(messagesRes.rows);
@@ -390,8 +410,11 @@ sunnifyRouter.post("/conversations/:id/messages", isUserAuthenticated, async (re
         if (Number.isNaN(convId)) return res.status(400).json({ error: "Invalid conversation id" });
         if (!content) return res.status(400).json({ error: "Message content required" });
 
-        const convRes = await query("SELECT user1_id, user2_id FROM conversations WHERE id = $1", [convId]);
-        if (convRes.rows.length === 0) return res.status(404).json({ error: "Conversation not found" });
+        const convRes = await query("SELECT user1_id, user2_id FROM conversations WHERE id = $1", [
+            convId,
+        ]);
+        if (convRes.rows.length === 0)
+            return res.status(404).json({ error: "Conversation not found" });
 
         const { user1_id, user2_id } = convRes.rows[0];
         const senderId = req.session.userId;
@@ -404,7 +427,7 @@ sunnifyRouter.post("/conversations/:id/messages", isUserAuthenticated, async (re
         const insertRes = await query(
             `INSERT INTO messages (conversation_id, sender_id, receiver_id, content)
             VALUES ($1, $2, $3, $4) RETURNING id, sent_at`,
-            [convId, senderId, receiverId, content]
+            [convId, senderId, receiverId, content],
         );
 
         res.status(201).json({ id: insertRes.rows[0].id, sent_at: insertRes.rows[0].sent_at });
@@ -415,7 +438,8 @@ sunnifyRouter.post("/conversations/:id/messages", isUserAuthenticated, async (re
 
 const errorResponse = (res, error) => {
     console.log(error);
-    const errorMessage = typeof error === "string" ? error : error.message || "Internal server error";
+    const errorMessage =
+        typeof error === "string" ? error : error.message || "Internal server error";
     res.status(500).json({ error: errorMessage });
 };
 

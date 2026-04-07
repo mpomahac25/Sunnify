@@ -1,42 +1,62 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
     <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chat</title>
-        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
-        <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
-        <link rel="stylesheet" href="./../css/chat.css">
-        <link rel="stylesheet" href="./../css/main.css">
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Chat</title>
+        <link
+            href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css"
+            rel="stylesheet"
+        />
+        <link
+            href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css"
+            rel="stylesheet"
+        />
+        <link rel="stylesheet" href="./../css/chat.css" />
+        <link rel="stylesheet" href="./../css/main.css" />
     </head>
     <body>
         <main class="chatpage-example">
-        <div id="header-container"></div>
+            <div id="header-container"></div>
 
             <section class="bg-light border-bottom py-4">
                 <div class="container">
                     <div class="row g-4 align-items-center">
                         <div class="col-12 col-lg-8">
-                        <span class="badge text-bg-warning mb-3">Inbox</span>
-                        <h1 class="display-6 fw-semibold mb-3">Chat with sellers in a clean and focused Sunnify inbox.</h1>
-                        <p class="lead text-muted mb-0">Ask about availability, pickup time, condition, and reserve details without leaving the conversation.</p>
+                            <span class="badge text-bg-warning mb-3">Inbox</span>
+                            <h1 class="display-6 fw-semibold mb-3">
+                                Chat with sellers in a clean and focused Sunnify inbox.
+                            </h1>
+                            <p class="lead text-muted mb-0">
+                                Ask about availability, pickup time, condition, and reserve details
+                                without leaving the conversation.
+                            </p>
                         </div>
                         <div class="col-12 col-lg-4">
                             <div class="card border-0 shadow-sm chat-tip-card">
                                 <div class="card-body p-4">
-                                <h2 class="h5 mb-3">Chat Tips</h2>
+                                    <h2 class="h5 mb-3">Chat Tips</h2>
                                     <ul class="list-unstyled mb-0 d-grid gap-3 text-muted">
                                         <li class="d-flex gap-3">
-                                        <i class="bi bi-clock text-primary"></i>
-                                        <span>Start with availability and pickup time to speed up the deal.</span>
+                                            <i class="bi bi-clock text-primary"></i>
+                                            <span>
+                                                Start with availability and pickup time to speed up
+                                                the deal.
+                                            </span>
                                         </li>
                                         <li class="d-flex gap-3">
-                                        <i class="bi bi-search text-primary"></i>
-                                        <span>Confirm item condition and any missing details before meeting.</span>
+                                            <i class="bi bi-search text-primary"></i>
+                                            <span>
+                                                Confirm item condition and any missing details
+                                                before meeting.
+                                            </span>
                                         </li>
                                         <li class="d-flex gap-3">
-                                        <i class="bi bi-shield-check text-primary"></i>
-                                        <span>Keep payment and location details clear and easy to verify.</span>
+                                            <i class="bi bi-shield-check text-primary"></i>
+                                            <span>
+                                                Keep payment and location details clear and easy to
+                                                verify.
+                                            </span>
                                         </li>
                                     </ul>
                                 </div>
@@ -52,37 +72,58 @@
                         <aside class="col-12 col-lg-4">
                             <div class="card border-0 shadow-sm chat-sidebar-card h-100">
                                 <div class="card-body p-4">
-                                    <div class="d-flex justify-content-between align-items-center mb-3">
-                                    <h2 class="h5 mb-0">Conversations</h2>
+                                    <div
+                                        class="d-flex justify-content-between align-items-center mb-3"
+                                    >
+                                        <h2 class="h5 mb-0">Conversations</h2>
                                     </div>
 
                                     <div class="d-grid gap-3">
                                         <button class="chat-user btn btn-light text-start active">
                                             <div class="d-flex align-items-center gap-3">
-                                            <div class="user-avatar rounded-circle d-flex align-items-center justify-content-center">H</div>
+                                                <div
+                                                    class="user-avatar rounded-circle d-flex align-items-center justify-content-center"
+                                                >
+                                                    H
+                                                </div>
                                                 <div class="flex-grow-1">
-                                                <div class="fw-semibold" id="sidebarSellerName">Hasbulla</div>
-                                                <div class="small text-muted" id="sidebarItemTitle">Fishing rod</div>
+                                                    <div class="fw-semibold" id="sidebarSellerName">
+                                                        Hasbulla
+                                                    </div>
+                                                    <div
+                                                        class="small text-muted"
+                                                        id="sidebarItemTitle"
+                                                    >
+                                                        Fishing rod
+                                                    </div>
                                                 </div>
                                             </div>
                                         </button>
 
                                         <button class="chat-user btn btn-light text-start">
                                             <div class="d-flex align-items-center gap-3">
-                                            <div class="user-avatar rounded-circle d-flex align-items-center justify-content-center">A</div>
+                                                <div
+                                                    class="user-avatar rounded-circle d-flex align-items-center justify-content-center"
+                                                >
+                                                    A
+                                                </div>
                                                 <div>
-                                                <div class="fw-semibold">Aino M.</div>
-                                                <div class="small text-muted">Desk Lamp</div>
+                                                    <div class="fw-semibold">Aino M.</div>
+                                                    <div class="small text-muted">Desk Lamp</div>
                                                 </div>
                                             </div>
                                         </button>
 
                                         <button class="chat-user btn btn-light text-start">
                                             <div class="d-flex align-items-center gap-3">
-                                            <div class="user-avatar rounded-circle d-flex align-items-center justify-content-center">L</div>
+                                                <div
+                                                    class="user-avatar rounded-circle d-flex align-items-center justify-content-center"
+                                                >
+                                                    L
+                                                </div>
                                                 <div>
-                                                <div class="fw-semibold">Leo T.</div>
-                                                <div class="small text-muted">Woven Bag</div>
+                                                    <div class="fw-semibold">Leo T.</div>
+                                                    <div class="small text-muted">Woven Bag</div>
                                                 </div>
                                             </div>
                                         </button>
@@ -96,55 +137,73 @@
                                 <div class="chat-header border-bottom p-3">
                                     <div class="row align-items-start g-3">
                                         <div class="col-3 d-flex align-items-center gap-3">
-                                        <div class="avatar rounded-circle d-flex align-items-center justify-content-center" id="chatAvatar">H</div>
+                                            <div
+                                                class="avatar rounded-circle d-flex align-items-center justify-content-center"
+                                                id="chatAvatar"
+                                            >
+                                                H
+                                            </div>
                                             <div>
-                                            <h2 class="fs-6 fs-md-5 mb-1" id="chatUserName">Hasbulla</h2>
+                                                <h2 class="fs-6 fs-md-5 mb-1" id="chatUserName">
+                                                    Hasbulla
+                                                </h2>
                                             </div>
                                         </div>
 
-                                        <div class="col-9 d-flex justify-content-end align-items-start">
-                                        <a href="/examples/post" class="btn btn-outline-secondary btn-sm fs-8 px-2 py-1">Back</a>
+                                        <div
+                                            class="col-9 d-flex justify-content-end align-items-start"
+                                        >
+                                            <a
+                                                href="/examples/post"
+                                                class="btn btn-outline-secondary btn-sm fs-8 px-2 py-1"
+                                            >
+                                                Back
+                                            </a>
                                         </div>
                                     </div>
 
-
-                                    <div class="img-container card ">
-                                    <div class="carousel-container"></div>
+                                    <div class="img-container card">
+                                        <div class="carousel-container"></div>
                                     </div>
 
-                                    <div class="col-12 py-1 d-flex justify-content-center align-items-center">
+                                    <div
+                                        class="col-12 py-1 d-flex justify-content-center align-items-center"
+                                    >
                                         <div class="product-info">
-                                        <div class="fw-semibold">Fishing rod</div>
-                                        <div class="text-muted small">Modelo X100</div>
-                                        <div class="fw-bold text-success">50€</div>
+                                            <div class="fw-semibold">Fishing rod</div>
+                                            <div class="text-muted small">Modelo X100</div>
+                                            <div class="fw-bold text-success">50€</div>
                                         </div>
                                     </div>
-
                                 </div>
 
                                 <div class="messages p-4" id="messagesList">
-
-
                                     <article class="message-received">
-                                    <div class="message-text">Hi! Is this still available?</div>
-                                    <div class="message-time">10:00 AM</div>
+                                        <div class="message-text">Hi! Is this still available?</div>
+                                        <div class="message-time">10:00 AM</div>
                                     </article>
 
                                     <article class="message-sent">
-                                    <div class="message-text">No, sorry.</div>
-                                    <div class="message-time">10:01 AM</div>
+                                        <div class="message-text">No, sorry.</div>
+                                        <div class="message-time">10:01 AM</div>
                                     </article>
 
                                     <article class="message-received">
-                                    <div class="message-text"> 0_0</div>
-                                    <div class="message-time">10:02 AM</div>
+                                        <div class="message-text">0_0</div>
+                                        <div class="message-time">10:02 AM</div>
                                     </article>
                                 </div>
 
                                 <div class="chat-input border-top p-4">
                                     <form class="d-flex gap-2 w-100" id="chatForm">
-                                        <input type="text" class="form-control" id="chatInput" placeholder="Send message..." autocomplete="off">
-                                    <button class="btn btn-primary" type="submit">Send</button>
+                                        <input
+                                            type="text"
+                                            class="form-control"
+                                            id="chatInput"
+                                            placeholder="Send message..."
+                                            autocomplete="off"
+                                        />
+                                        <button class="btn btn-primary" type="submit">Send</button>
                                     </form>
                                 </div>
                             </div>
@@ -153,15 +212,13 @@
                 </div>
             </section>
         </main>
-    </div>
+        <div id="footer-container"></div>
 
+        <script src="./../Reusable-HTML/components/headerLoader.js"></script>
+        <script src="./../Reusable-HTML/components/footerLoader.js"></script>
+        <script src="./../Reusable-HTML/components/carouselLoader.js"></script>
+        <script type="module" src="./../js/chat.js"></script>
 
-<div id="footer-container"></div>
-
-<script src="./../Reusable-HTML/components/headerLoader.js"></script>
-<script src="./../Reusable-HTML/components/footerLoader.js"></script>
-<script src="./../Reusable-HTML/components/carouselLoader.js"></script>
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
-</body>
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+    </body>
 </html>
