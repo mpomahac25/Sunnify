@@ -84,20 +84,19 @@
                                         <label for="listing-condition" class="form-label fw-semibold">Condition</label>
                                         <select id="listing-condition" name="condition" class="form-select form-select-lg">
                                             <option selected>Choose condition</option>
-                                            <option>Like new</option>
+                                            <option>Excellent</option>
                                             <option>Good</option>
-                                            <option>Used</option>
+                                            <option>Acceptable</option>
+                                            <option>Bad</option>
+                                            <option>Unusable, parts only</option>
                                         </select>
                                     </div>
 
-                                    <div class="col-12 col-md-6">
+                                    <div class="col-12 col-md-6 position-relative">
                                         <label for="listing-location" class="form-label fw-semibold">Location</label>
-                                        <select id="listing-location" name="location" class="form-select form-select-lg">
-                                            <option selected>Select location</option>
-                                            <option>Oulu, Tuira</option>
-                                            <option>Oulu, Keskusta</option>
-                                            <option>Oulu, Kaukovaino</option>
-                                        </select>
+                                        <input id="listing-location" name="location" class="form-control form-control-lg" type="text" placeholder="Choose city" autocomplete="off">
+                                        <input id="listing-location-id" name="city_id" type="hidden">
+                                        <ul id="listing-location-dropdown" class="list-group position-absolute w-100 location-dropdown"></ul>
                                     </div>
 
                                     <div class="col-12 col-md-6">
@@ -164,15 +163,6 @@
                                         </button>
                                     </div>
                                 </div>
-
-                                <div class="createpost-checklist mt-4">
-                                    <h3 class="h6 mb-3">Before publishing</h3>
-                                    <ul class="list-unstyled mb-0 d-grid gap-2 text-muted">
-                                        <li><i class="bi bi-check2-circle text-success me-2"></i>Title is specific</li>
-                                        <li><i class="bi bi-check2-circle text-success me-2"></i>Price is visible</li>
-                                        <li><i class="bi bi-check2-circle text-success me-2"></i>Photos are ready</li>
-                                    </ul>
-                                </div>
                             </div>
                         </div>
                     </div>
@@ -189,6 +179,6 @@
     <script src="./Reusable-HTML/components/footerLoader.js"></script>    
     <script src="./Reusable-HTML/components/carouselLoader.js"></script>    
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="./js/createpost.js"></script>
+    <script type="module" src="./js/createpost.js"></script>
 </body>
 </html>

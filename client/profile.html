@@ -26,7 +26,7 @@
                                     <div class="flex-grow-1">
                                         <div class="d-flex flex-column flex-md-row justify-content-md-between align-items-md-start gap-3">
                                             <div>
-                                                <h1 class="h3 mb-2" id="profile-name">Joe Biden</h1>
+                                                <h1 class="h3 mb-2" id="profile-name"></h1>
                                             </div>
                                             
                                         </div>
@@ -39,19 +39,19 @@
                                             </div>
                                             <div class="col-6 col-md-3">
                                                 <div class="stat-card">
-                                                    <div class="stat-value">126</div>
+                                                    <div class="stat-value" id="profile-posts-count"></div>
                                                     <div class="stat-label">Sales</div>
                                                 </div>
                                             </div>
                                             <div class="col-6 col-md-3">
                                                 <div class="stat-card">
-                                                    <div class="stat-value">38</div>
+                                                    <div class="stat-value" id="profile-saved-posts-count">38</div>
                                                     <div class="stat-label">Saved items</div>
                                                 </div>
                                             </div>
                                             <div class="col-6 col-md-3">
                                                 <div class="stat-card">
-                                                    <div class="stat-value">2026</div>
+                                                    <div class="stat-value" id="profile-created-at"></div>
                                                     <div class="stat-label">Member since</div>
                                                 </div>
                                             </div>
@@ -59,11 +59,6 @@
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                    </div>
-
-                    <div class="col-12 col-lg-4">
-                        <div class="card border-0 h-100">
                         </div>
                     </div>
                 </div>
@@ -229,33 +224,8 @@
                         </div>
                         <button class="btn btn-outline-secondary btn-sm">View all</button>
                     </div>
-                    <div class="row g-4">
-                        <div class="col-12 col-md-6 col-xl-4">
-                            <div class="img-container card h-100">
-                                <div class="carousel-container"></div>
-                                <div class="card-body">
-                                    <h3 class="h6 card-title mb-1">Denim Jacket</h3>
-                                    <p class="text-muted mb-2">Oulu, Tuira</p>
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <span class="fw-bold">25 EUR</span>
-
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-12 col-md-6 col-xl-4"> 
-                            <div class="img-container card h-100">
-                                <div class="carousel-container"></div>
-                                <div class="card-body">
-                                    <h3 class="h6 card-title mb-1">Ceramic Vase</h3>
-                                    <p class="text-muted mb-2">Oulu, Heinapaa</p>
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <span class="fw-bold">14 EUR</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-12 col-md-6 col-xl-4">
+                    <div class="row g-4" id="profile-posts-list">
+                        <!--<div class="col-12 col-md-6 col-xl-4">
                             <div class="img-container card h-100">
                                 <div class="carousel-container"></div>
                                 <div class="card-body">
@@ -266,7 +236,7 @@
                                     </div>
                                 </div>
                             </div>
-                        </div>
+                        </div> !-->
                     </div>
                 </section>
 
@@ -295,5 +265,6 @@
     <script src="./../Reusable-HTML/components/footerLoader.js"></script>
     <script src="./../Reusable-HTML/components/carouselLoader.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+    <script type="module" src="./js/profile.js"></script>
 </body>
 </html>

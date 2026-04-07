@@ -136,6 +136,10 @@ sunnifyRouter.get("/locations", async (req, res) => {
     res.status(200).json(locationData);
 });
 
+sunnifyRouter.get("/post-conditions", async (req, res) => {
+    
+})
+
 // post-related API
 
 // create post
