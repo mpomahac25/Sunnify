@@ -41,7 +41,7 @@ import { createPostCard } from "../Reusable-HTML/components/postCard.js";
         //setText("profile-rating", ;
         setText("profile-posts-count", profile.posts_count);
         //setText("profile-saved-posts-count", )
-        setText("profile-created-at", profile.created_at);
+        setText("profile-created-at", formatMemberSince(profile.created_at));
     }
 
     const renderMissingProfile = () => {
@@ -88,4 +88,17 @@ import { createPostCard } from "../Reusable-HTML/components/postCard.js";
         }
     };
 
+    const formatMemberSince = (memberSince) => {
+    if (!memberSince) {
+        return "Member since unavailable";
+    }
+
+    const date = new Date(memberSince);
+
+    if (Number.isNaN(date.getTime())) {
+        return "Member since unavailable";
+    }
+
+    return `${date.toLocaleDateString()}`;
+};
 })();

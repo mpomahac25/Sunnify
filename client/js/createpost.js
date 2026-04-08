@@ -11,6 +11,7 @@ import { getSelectedLocation, getTypedLocationValue, markLocationInvalid, clearL
         const priceField = document.getElementById("listing-price");
         const conditionField = document.getElementById("listing-condition");
         const categoryField = document.getElementById("listing-category");
+
         if (!form) {
             return;
         }
@@ -108,6 +109,7 @@ import { getSelectedLocation, getTypedLocationValue, markLocationInvalid, clearL
             }
         });
     });
+    
     // validation during user creating post
     const validateForm = ({ title, description, price, condition, location, cityId, category }) => {
         if (!title) {
