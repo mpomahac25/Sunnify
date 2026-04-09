@@ -12,8 +12,17 @@ import { createPostCard } from "../Reusable-HTML/components/postCard.js";
             return;
         }
 
-        
         try {
+            const sessionResponse = await fetch(`${PROFILE_BACKEND_ROOT_URL}/check-session`, {
+            method: "get",
+            credentials: "include"
+            });
+
+            const sessionResult = await sessionResponse.json()
+            const sessionUserId = sessionResult.loggedIn ? sessionResult.userId : null;
+
+            const isOwnProfile = sessionUserId === userId;
+
             const profileResponse = await fetch(`${PROFILE_BACKEND_ROOT_URL}/users/${userId}`, {
                 method: "get"
             });
@@ -30,7 +39,7 @@ import { createPostCard } from "../Reusable-HTML/components/postCard.js";
             const postsResponse = await fetch(`/users/${userId}/posts`);
             const postsResult = await postsResponse.json();
 
-            renderProfilePosts(postsResult)
+            renderProfilePosts(postsResult, isOwnProfile)
         } catch (error) {
             console.error(error)
         }
@@ -53,7 +62,7 @@ import { createPostCard } from "../Reusable-HTML/components/postCard.js";
     };
 
     // Profile listings
-    const renderProfilePosts = (posts) => {
+    const renderProfilePosts = (posts, isOwnProfile) => {
         const postsList = document.getElementById("profile-posts-list");
 
         if (!postsList) {
@@ -72,6 +81,11 @@ import { createPostCard } from "../Reusable-HTML/components/postCard.js";
                 columnClassName: "col-12 col-md-6 col-xl-4",
                 showFavoriteButton: false
             });
+
+            if (isOwnProfile) {
+                attachPostManagementActions(postCard, post)
+            }
+
             postsList.appendChild(postCard);
         });
 
@@ -79,6 +93,44 @@ import { createPostCard } from "../Reusable-HTML/components/postCard.js";
             window.loadCarousels(postsList);
         }
     };
+
+    const attachPostManagementActions = (postCard, post) => {
+        const card = postCard.querySelector(".img-container.card");
+
+        if (!card){
+            return;
+        }
+
+        const actionsWrapper = document.createElement("div")
+        actionsWrapper.className = "card-footer d-flex justify-content-between align-items-center gap-2"
+
+        // edit btn
+        const editButton = document.createElement("button");
+        editButton.className = 'btn btn-outline-primary btn-sm'
+        editButton.textContent = "Edit";
+
+        editButton.addEventListener("click", (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            window.location.href = ``
+        })
+        // delete btn
+        const deleteButton = document.createElement("button")
+        deleteButton.className = 'btn btn-outline-danger btn-sm'
+        deleteButton.textContent = "Delete";
+
+        deleteButton.addEventListener("click", (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+
+            // here will be confirm modal
+        })
+
+        actionsWrapper.appendChild(editButton)
+        actionsWrapper.appendChild(deleteButton)
+
+        card.appendChild(actionsWrapper);
+    }
 
     const setText = (id, value) => {
         const element = document.getElementById(id);
@@ -88,6 +140,7 @@ import { createPostCard } from "../Reusable-HTML/components/postCard.js";
         }
     };
 
+    // format member-since
     const formatMemberSince = (memberSince) => {
     if (!memberSince) {
         return "Member since unavailable";

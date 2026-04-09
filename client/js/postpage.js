@@ -45,6 +45,8 @@
 
         document.title = post.title ? `${post.title} | Sunnify` : "Post | Sunnify";
 
+        // no hablar espanol mi amigo anas.
+        
         // mostrar nombre del vendedor (viene de la API después del cambio)
         setText("seller-name", post.seller_username || "Seller");
 

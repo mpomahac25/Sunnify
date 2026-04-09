@@ -160,6 +160,7 @@ sunnifyRouter.post("/posts", isUserAuthenticated, async (req, res) => {
 
         // make some variables from request acceptable for frontend (Marco I'm gonna kill u one day ~_~)
         // Mimimimimi stop being a wuss (also learn how to spell my name VaDUMB)
+        // I'm gonna nuke Tuira MARKO.
         const normalizedCity = location.split(",")[0].trim();
         const normalizedCategory = category === "Clothing" ? "Clothes" : category;
         const normalizedCondition =
@@ -174,7 +175,8 @@ sunnifyRouter.post("/posts", isUserAuthenticated, async (req, res) => {
 
         // inserting all of this bullshit
         const result = await query(
-            `INSERT INTO posts (title, description, price, city_id, category_id, subcategory_id, condition, status, user_id)
+            `
+            INSERT INTO posts (title, description, price, city_id, category_id, subcategory_id, condition, status, user_id)
             VALUES ($1, $2, $3, COALESCE((SELECT id FROM cities WHERE name = $4), 0), COALESCE((SELECT id FROM post_categories WHERE name = $5), 0), 0, COALESCE((SELECT id FROM post_condition WHERE condition = $6), 0), COALESCE((SELECT id FROM post_status WHERE status = $7), 0), $8)
             RETURNING id`,
             [
@@ -245,9 +247,84 @@ sunnifyRouter.get("/posts", async (req, res) => {
     }
 });
 
-// profile related API
+// DELETE exact post
+sunnifyRouter.delete("/posts/:id", isUserAuthenticated, async (req, res) => {
+    try{
+        const id = parseInt(req.params.id);
 
-//get exact profile
+        if (Number.isNaN(id)) {
+                return res.status(400).json({ error: "Invalid post id" });
+            }
+        
+        // selects id of the owner of the post
+        const postResult = await query(
+            "SELECT user_id FROM posts WHERE id = $1",
+            [id]
+        );
+
+        // checks if owners id is ok
+        if (postResult.rows.length === 0) {
+            return res.status(404).json({ error: "Post not found" });
+        }
+
+        // ownership rule
+        const postOwnerId = postResult.rows[0].user_id;
+
+        if (postOwnerId !== req.session.userId) { 
+            return res.status(403).json({ error: "Post is not yours"})
+        }
+
+        // query to delete post
+        const deleteResult = await query(
+            `
+            DELETE FROM posts
+            WHERE id = $1
+            RETURNING id;`,
+            [id]
+        )
+        
+        res.status(200).json({ id: deleteResult.rows[0].id });
+    } catch (error) {
+        errorResponse(res, error)
+    }
+})
+
+// EDIT exact post
+sunnifyRouter.patch("/posts/:id", isUserAuthenticated, async (req, res) => {
+    try{
+        const id = parseInt(req.params.id);
+
+        if (Number.isNaN(id)) {
+            return res.status(400).json({ error: "Invalid post id" });
+        }
+
+        // selects id of the owner of the post
+        const postResult = await query(
+            "SELECT user_id FROM posts WHERE id = $1",
+            [id]
+        );
+
+        // checks if owners id is ok
+        if (postResult.rows.length === 0) {
+            return res.status(404).json({ error: "Post not found" });
+        }
+
+        // ownership rule
+        const postOwnerId = postResult.rows[0].user_id;
+
+        if (postOwnerId !== req.session.UserId) { 
+            return res.status(403).json({ error: "Post is not yours"})
+        }
+
+
+    } catch (error) {
+        errorResponse(res, error)
+    }
+})
+
+// profile-related API
+
+// GET exact profile
 sunnifyRouter.get("/users/:id", async (req, res) => {
     try {
         const id = parseInt(req.params.id);
@@ -275,7 +352,7 @@ sunnifyRouter.get("/users/:id", async (req, res) => {
     }
 });
 
-// get user listings
+// GET user listings
 sunnifyRouter.get("/users/:id/posts", async (req, res) => {
     try {
         const id = parseInt(req.params.id);
@@ -297,6 +374,12 @@ sunnifyRouter.get("/users/:id/posts", async (req, res) => {
         errorResponse(res, error);
     }
 });
+
+// DELETE user
+sunnifyRouter.delete("/users/:id", isUserAuthenticated, async (req, res) => {
+
+})
+
 // Search System
 
 sunnifyRouter.post("/search", async (req, res) => {
