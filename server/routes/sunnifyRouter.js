@@ -1,10 +1,17 @@
+// server/routes/sunnifyRouter.js
+// Express router that implements the Sunnify backend API for auth, posts, profiles,
+// search, locations, and a simple conversations/messages system.
+// The original code is unchanged; the comments below explain purpose and behavior.
+
 const express = require("express");
 const { query } = require("../helpers/db.js");
 const { encryptPassword, verifyPassword } = require("../helpers/pwEncrypt.js");
 
 const sunnifyRouter = express.Router();
 
-// Middleware stuff
+//  Middleware 
+// `isUserAuthenticated` checks for a session user id and returns 401 if missing.
+// Use this on routes that require the user to be logged in.
 const isUserAuthenticated = (req, res, next) => {
     if (!req.session.userId) {
         return res.status(401).json({ error: "Not authenticated!" });
@@ -12,6 +19,8 @@ const isUserAuthenticated = (req, res, next) => {
     next();
 };
 
+// `preventAuthAccess` denies access when a user is already logged in.
+// Useful for routes like register/login to avoid logged-in users calling them.
 const preventAuthAccess = (req, res, next) => {
     if (req.session.userId) {
         return res.status(403).json({ error: "Already logged in" });
@@ -19,7 +28,12 @@ const preventAuthAccess = (req, res, next) => {
     next();
 };
 
-// Routes handling
+//  Auth routes 
+
+// POST /register
+// Protected by `preventAuthAccess` so only anonymous users may register.
+// Checks for existing username/email, hashes password, inserts user, returns id.
+// Note: additional validation (username/email format, profanity) is TODO.
 sunnifyRouter.post("/register", preventAuthAccess, async (req, res) => {
     try {
         // Check if user already exists
@@ -50,6 +64,11 @@ sunnifyRouter.post("/register", preventAuthAccess, async (req, res) => {
     }
 });
 
+// POST /login
+// Accepts `usernameOrEmail` and `password` in the request body.
+// Looks up user by email if the identifier contains '@', otherwise by username.
+// Verifies password hash, sets `req.session.userId` and `req.session.username` on success.
+// Returns a success message and updates last_login in DB.
 sunnifyRouter.post("/login", preventAuthAccess, async (req, res) => {
     try {
         const loginIdentifier = req.body.usernameOrEmail;
@@ -79,18 +98,21 @@ sunnifyRouter.post("/login", preventAuthAccess, async (req, res) => {
             return;
         }
 
+        // Save session info so subsequent requests identify this user.
         req.session.userId = user.id;
         req.session.username = user.username;
 
         res.status(200).json({ message: "Login success!", id: user.id });
 
-        // Update last_login in database
+        // Update last_login in database (fire-and-forget after responding).
         result = await query("UPDATE users SET last_login = NOW() WHERE id = $1", [user.id]);
     } catch (error) {
         errorResponse(res, error);
     }
 });
 
+// POST /logout
+// Destroys the session and clears the session cookie.
 sunnifyRouter.post("/logout", (req, res) => {
     req.session.destroy((err) => {
         if (err) errorResponse(res, "Logout failed");
@@ -99,11 +121,18 @@ sunnifyRouter.post("/logout", (req, res) => {
     });
 });
 
+// GET /check-session
+// Simple endpoint that returns `{ loggedIn: true, userId }` when a session exists.
+// Used by frontend to know whether the browser is authenticated.
 sunnifyRouter.get("/check-session", (req, res) => {
     if (req.session.userId) res.status(200).json({ loggedIn: true, userId: req.session.userId });
     else res.status(200).json({ loggedIn: false, userId: null });
 });
 
+// Location data 
+// GET /locations
+// Returns a hierarchical list of countries -> regions -> cities built from three DB queries.
+// Useful for address-picker UI.
 sunnifyRouter.get("/locations", async (req, res) => {
     // Fetch countries, regions, and cities lists
     let result = await query("SELECT id, name FROM countries ORDER BY name ASC");
@@ -136,13 +165,15 @@ sunnifyRouter.get("/locations", async (req, res) => {
     res.status(200).json(locationData);
 });
 
-sunnifyRouter.get("/post-conditions", async (req, res) => {
-    
-})
+// Placeholder for `/post-conditions` API (empty handler)
+sunnifyRouter.get("/post-conditions", async (req, res) => {});
 
-// post-related API
+//  Post-related API 
 
-// create post
+// POST /posts
+// Creates a new post. Requires authentication via `isUserAuthenticated`.
+// Validates required fields and price, normalizes some input values for DB,
+// then inserts a new post returning its id.
 sunnifyRouter.post("/posts", isUserAuthenticated, async (req, res) => {
     try {
         const { title, description, price, location, category, condition, status } = req.body;
@@ -158,22 +189,21 @@ sunnifyRouter.post("/posts", isUserAuthenticated, async (req, res) => {
             return res.status(400).json({ error: "Invalid price" });
         }
 
-        // make some variables from request acceptable for frontend (Marco I'm gonna kill u one day ~_~)
-        // Mimimimimi stop being a wuss (also learn how to spell my name VaDUMB)
-        // I'm gonna nuke Tuira MARKO.
+        // Input normalization: convert display values into DB-friendly lookups.
+        // Note: the file contains some developer jokes/comments which are preserved here.
         const normalizedCity = location.split(",")[0].trim();
         const normalizedCategory = category === "Clothing" ? "Clothes" : category;
         const normalizedCondition =
             condition === "Like new"
                 ? "Excellent"
                 : condition === "Used"
-                  ? "Acceptable"
-                  : condition;
+                ? "Acceptable"
+                : condition;
         const normalizedStatus = status
             ? status.charAt(0).toUpperCase() + status.slice(1).toLowerCase()
             : "Available";
 
-        // inserting all of this bullshit
+        // Insert post using `COALESCE((SELECT id ...), 0)` so missing lookups fall back to 0.
         const result = await query(
             `
             INSERT INTO posts (title, description, price, city_id, category_id, subcategory_id, condition, status, user_id)
@@ -196,7 +226,9 @@ sunnifyRouter.post("/posts", isUserAuthenticated, async (req, res) => {
     }
 });
 
-// GET exact post for postpage
+// GET /posts/:id
+// Returns a single post with associated seller username and location/category names.
+// Validates id, returns 404 if not found.
 sunnifyRouter.get("/posts/:id", async (req, res) => {
     try {
         const id = parseInt(req.params.id);
@@ -231,7 +263,8 @@ sunnifyRouter.get("/posts/:id", async (req, res) => {
     }
 });
 
-// GET posts for any other pages
+// GET /posts
+// Returns a list of posts (id, title, price, location) for index/listing pages.
 sunnifyRouter.get("/posts", async (req, res) => {
     try {
         const result = await query(
@@ -247,51 +280,11 @@ sunnifyRouter.get("/posts", async (req, res) => {
     }
 });
 
-// DELETE exact post
+// DELETE /posts/:id
+// Authenticated route. Validates post id, ensures ownership (post.user_id === session.userId),
+// deletes the post and returns deleted id.
 sunnifyRouter.delete("/posts/:id", isUserAuthenticated, async (req, res) => {
-    try{
-        const id = parseInt(req.params.id);
-
-        if (Number.isNaN(id)) {
-                return res.status(400).json({ error: "Invalid post id" });
-            }
-        
-        // selects id of the owner of the post
-        const postResult = await query(
-            "SELECT user_id FROM posts WHERE id = $1",
-            [id]
-        );
-
-        // checks if owners id is ok
-        if (postResult.rows.length === 0) {
-            return res.status(404).json({ error: "Post not found" });
-        }
-
-        // ownership rule
-        const postOwnerId = postResult.rows[0].user_id;
-
-        if (postOwnerId !== req.session.userId) { 
-            return res.status(403).json({ error: "Post is not yours"})
-        }
-
-        // query to delete post
-        const deleteResult = await query(
-            `
-            DELETE FROM posts
-            WHERE id = $1
-            RETURNING id;`,
-            [id]
-        )
-        
-        res.status(200).json({ id: deleteResult.rows[0].id });
-    } catch (error) {
-        errorResponse(res, error)
-    }
-})
-
-// EDIT exact post
-sunnifyRouter.patch("/posts/:id", isUserAuthenticated, async (req, res) => {
-    try{
+    try {
         const id = parseInt(req.params.id);
 
         if (Number.isNaN(id)) {
@@ -312,19 +305,63 @@ sunnifyRouter.patch("/posts/:id", isUserAuthenticated, async (req, res) => {
         // ownership rule
         const postOwnerId = postResult.rows[0].user_id;
 
-        if (postOwnerId !== req.session.UserId) { 
-            return res.status(403).json({ error: "Post is not yours"})
+        if (postOwnerId !== req.session.userId) {
+            return res.status(403).json({ error: "Post is not yours" });
         }
 
+        // query to delete post
+        const deleteResult = await query(
+            `
+            DELETE FROM posts
+            WHERE id = $1
+            RETURNING id;`,
+            [id],
+        );
 
+        res.status(200).json({ id: deleteResult.rows[0].id });
     } catch (error) {
-        errorResponse(res, error)
+        errorResponse(res, error);
     }
-})
+});
 
-// profile-related API
+// PATCH /posts/:id
+// Intended to edit/update a post (authenticated + ownership). Current handler:
+//   Validates id, checks post exists, verifies ownership.
+//   Also: the route currently does not perform any update, update logic is missing.
+sunnifyRouter.patch("/posts/:id", isUserAuthenticated, async (req, res) => {
+    try {
+        const id = parseInt(req.params.id);
 
-// GET exact profile
+        if (Number.isNaN(id)) {
+            return res.status(400).json({ error: "Invalid post id" });
+        }
+
+        // selects id of the owner of the post
+        const postResult = await query(
+            "SELECT user_id FROM posts WHERE id = $1",
+            [id]
+        );
+
+        // checks if owners id is ok
+        if (postResult.rows.length === 0) {
+            return res.status(404).json({ error: "Post not found" });
+        }
+
+        // ownership rule
+        const postOwnerId = postResult.rows[0].user_id;
+
+        if (postOwnerId !== req.session.userId) {
+            return res.status(403).json({ error: "Post is not yours" });
+        }
+    } catch (error) {
+        errorResponse(res, error);
+    }
+});
+
+//  Profile-related API 
+
+// GET /users/:id
+// Returns a user's profile summary (id, username, created_at, posts_count).
 sunnifyRouter.get("/users/:id", async (req, res) => {
     try {
         const id = parseInt(req.params.id);
@@ -352,7 +389,8 @@ sunnifyRouter.get("/users/:id", async (req, res) => {
     }
 });
 
-// GET user listings
+// GET /users/:id/posts
+// Returns posts created by the given user id.
 sunnifyRouter.get("/users/:id/posts", async (req, res) => {
     try {
         const id = parseInt(req.params.id);
@@ -375,13 +413,14 @@ sunnifyRouter.get("/users/:id/posts", async (req, res) => {
     }
 });
 
-// DELETE user
-sunnifyRouter.delete("/users/:id", isUserAuthenticated, async (req, res) => {
+// DELETE /users/:id
+// Placeholder: no implementation provided.
+sunnifyRouter.delete("/users/:id", isUserAuthenticated, async (req, res) => {});
 
-})
-
-// Search System
-
+// Search 
+// POST /search
+// Very small search helper that tokenizes the provided query into keywords.
+// Currently only returns the tokens (no DB search implemented).
 sunnifyRouter.post("/search", async (req, res) => {
     const searchText = req.body.query;
     if (!searchText || !searchText.trim()) {
@@ -393,29 +432,18 @@ sunnifyRouter.post("/search", async (req, res) => {
 });
 
 /*
-//sunnifyRouter.get("/", async (req, res) => {
-//    try {
-//        const result = await query("SELECT * FROM task");
-//        const rows = result.rows ? result.rows : [];
-//        res.status(200).json(rows);
-//    } catch (error) {
-//        errorResponse(res, error);
-//    }
-//});
-
-//sunnifyRouter.delete("/delete/:id", async (req, res) => {
-//    const id = parseInt(req.params.id);
-
-//    try {
-//        const result = await query("DELETE FROM task WHERE id = $1", [id]);
-//        res.status(200).json({ id: id });
-//    } catch (error) {
-//        errorResponse(res, error);
-//    }
-//})
+// Some commented-out example routes are present below in the original file.
 */
 
-// Check if conversation exists between 2 users, if not, create it and returns conversationId
+//  Conversations & Messages 
+
+// POST /conversations/check-or-create
+// Given two user ids (`user1`, `user2`) ensures a conversation exists between them.
+// Requires authentication and verifies the session user is one of the two participants.
+// If a conversation already exists (either order), returns 200 with `conversationId`.
+// Otherwise inserts a new conversation and returns 201 with the new id.
+// Note: the insertion logic chooses an ordering for user1/user2 so the session user
+//   becomes the first participant when inserting.
 sunnifyRouter.post("/conversations/check-or-create", isUserAuthenticated, async (req, res) => {
     try {
         const user1 = Number(req.body.user1);
@@ -457,15 +485,18 @@ sunnifyRouter.post("/conversations/check-or-create", isUserAuthenticated, async 
     }
 });
 
-// Get that returns the messages of a conversation
+// GET /conversations/:id/messages
+// Returns the messages for a conversation ordered by `sent_at` ascending.
+// Checks that conversation exists and that the session user is a participant.
 sunnifyRouter.get("/conversations/:id/messages", isUserAuthenticated, async (req, res) => {
     try {
         const convId = Number(req.params.id);
         if (Number.isNaN(convId)) return res.status(400).json({ error: "Invalid conversation id" });
 
-        const convRes = await query("SELECT user1_id, user2_id FROM conversations WHERE id = $1", [
-            convId,
-        ]);
+        const convRes = await query(
+            "SELECT user1_id, user2_id FROM conversations WHERE id = $1", 
+            [convId],
+        );
         if (convRes.rows.length === 0)
             return res.status(404).json({ error: "Conversation not found" });
 
@@ -489,7 +520,10 @@ sunnifyRouter.get("/conversations/:id/messages", isUserAuthenticated, async (req
     }
 });
 
-// Insert a new message, returns id and sent_at
+// POST /conversations/:id/messages
+// Inserts a new message into a conversation.
+// Validates conversation id, non-empty trimmed content, and that sender is a participant.
+// Computes the receiverId by picking the other participant and returns the inserted id and sent_at.
 sunnifyRouter.post("/conversations/:id/messages", isUserAuthenticated, async (req, res) => {
     try {
         const convId = Number(req.params.id);
@@ -523,6 +557,8 @@ sunnifyRouter.post("/conversations/:id/messages", isUserAuthenticated, async (re
     }
 });
 
+// Error helper 
+// `errorResponse` centralizes 500 responses and logs the error to the console.
 const errorResponse = (res, error) => {
     console.log(error);
     const errorMessage =
