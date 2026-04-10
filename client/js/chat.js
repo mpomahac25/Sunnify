@@ -1,67 +1,115 @@
 import { Conversation } from "./Classes/conversation.js";
 
-const messagesList = document.getElementById("messagesList");
-const chatForm = document.getElementById("chatForm");
-const chatInput = document.getElementById("chatInput");
-const chatCard = document.querySelector(".chat-main-card");
+const messagesListEl = document.getElementById("messagesListEl") || document.getElementById("messagesList");
+const chatFormEl = document.getElementById("chatFormEl") || document.getElementById("chatForm");
+let chatInputEl = document.getElementById("chatInputEl") || document.getElementById("chatInput");
+if (!chatInputEl && chatFormEl) chatInputEl = chatFormEl.querySelector("input[type=text], input");
+const chatCardEl = document.querySelector(".chat-main-card");
 
-let conv = null;
-let pollTimer = null;
+let currentConversation = null;
+let pollIntervalId = null;
+let currentUserId = null;
 const POLL_INTERVAL_MS = 10000; // 10s
 
 // Parse page-level ids early
-const url = new URL(window.location.href);
-const sellerQuery = url.searchParams.get("sellerId");
-const convQuery = url.searchParams.get("conversationId");
-const dataset = chatCard?.dataset || {};
-const PAGE_CONVERSATION_ID = dataset.conversationId || convQuery;
-const PAGE_SELLER_ID = dataset.sellerId || sellerQuery;
+const pageUrl = new URL(window.location.href);
+const sellerIdQuery = pageUrl.searchParams.get("sellerId");
+const conversationIdQuery = pageUrl.searchParams.get("conversationId");
+const chatCardDataset = chatCardEl?.dataset || {};
+const pageConversationId = chatCardDataset.conversationId || conversationIdQuery;
+const pageSellerId = chatCardDataset.sellerId || sellerIdQuery;
 
 async function checkSession() {
-    const res = await fetch("/check-session", { credentials: "include" });
-    if (!res.ok) throw new Error("Couldn't verify session");
-    return res.json();
+    const response = await fetch("/check-session", { credentials: "include" });
+    if (!response.ok) throw new Error("Couldn't verify session");
+    return response.json();
 }
 
-async function ensureConversation(currentUserId) {
-    if (PAGE_CONVERSATION_ID) return Number(PAGE_CONVERSATION_ID);
+async function ensureConversation(currentUserIdParam) {
+    if (pageConversationId) return Number(pageConversationId);
 
-    const sellerId = PAGE_SELLER_ID;
+    const sellerId = pageSellerId;
     if (!sellerId) {
-        throw new Error("There's no conversationId or sellerId to start a chat with.");
+        // no throw: return null and let caller decide what to do
+        return null;
     }
 
-    const res = await fetch("/conversations/check-or-create", {
+    const response = await fetch("/conversations/check-or-create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ user1: currentUserId, user2: Number(sellerId) }),
+        body: JSON.stringify({ user1: currentUserIdParam, user2: Number(sellerId) }),
     });
-    const data = await res.json().catch(() => null);
-    if (!res.ok) throw new Error(data?.error || "Error creating/retrieving conversation");
-    return data.conversationId;
+    const jsonData = await response.json().catch(() => null);
+    if (!response.ok) {
+        console.error("Error creating/obtaining conversation:", jsonData?.error || response.status);
+        return null;
+    }
+    return jsonData.conversationId;
+}
+
+async function createOrGetConversationForSeller(sellerId) {
+    if (!currentUserId) throw new Error("Session user missing");
+    try {
+        const response = await fetch("/conversations/check-or-create", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify({ user1: currentUserId, user2: Number(sellerId) }),
+        });
+        const jsonData = await response.json().catch(() => null);
+        if (!response.ok) {
+            console.error(
+                "createOrGetConversationForSeller failed:",
+                jsonData?.error || response.status,
+            );
+            return null;
+        }
+        return jsonData.conversationId;
+    } catch (err) {
+        console.error("Network error:", err);
+        return null;
+    }
 }
 
 function scrollToBottom() {
-    if (!messagesList) return;
-    messagesList.scrollTop = messagesList.scrollHeight;
+    if (!messagesListEl) return;
+    messagesListEl.scrollTop = messagesListEl.scrollHeight;
 }
 
 async function loadMessages() {
-    if (!conv) return;
+    if (!currentConversation) {
+        console.warn("No conversation selected - nothing to load.");
+        return;
+    }
     try {
-        await conv.getMessages();
-        conv.renderMessages(messagesList);
+        await currentConversation.getMessages();
+        currentConversation.renderMessages(messagesListEl);
         scrollToBottom();
-        console.log("Messages loaded:", conv.messages.length);
+        console.log("Messages loaded:", currentConversation.messages.length);
     } catch (err) {
         console.error("Error loading messages:", err.message || err);
     }
 }
 
+async function switchConversationById(conversationId) {
+    if (!conversationId) return;
+    currentConversation = new Conversation(conversationId, currentUserId);
+    await loadMessages();
+}
+
+async function switchConversationBySellerId(sellerId) {
+    const conversationId = await createOrGetConversationForSeller(sellerId);
+    if (!conversationId) {
+        alert("No se pudo crear/obtener la conversación con ese usuario.");
+        return;
+    }
+    await switchConversationById(conversationId);
+}
+
 async function init() {
     try {
-        if (!messagesList || !chatForm || !chatInput || !chatCard) {
+        if (!messagesListEl || !chatFormEl || !chatInputEl || !chatCardEl) {
             console.warn("Chat elements are missing from the page.");
             return;
         }
@@ -69,57 +117,88 @@ async function init() {
         const session = await checkSession();
         if (!session.loggedIn) {
             console.log("You are not logged in the browser. Please login and reload the page.");
+            chatInputEl.disabled = true;
+            chatFormEl.querySelector("button[type=submit]")?.setAttribute("disabled", "true");
             return;
         }
-        const currentUserId = session.userId;
+        currentUserId = session.userId;
 
-        if (!PAGE_CONVERSATION_ID && !PAGE_SELLER_ID) {
-            console.warn("There's no sellerId or conversationId to start a chat with.");
-            return;
+        // Attach handlers to left-side conversation buttons so user can pick one
+        document.querySelectorAll(".chat-user").forEach((btn) => {
+            btn.addEventListener("click", async () => {
+                const btnDataset = btn.dataset;
+                if (btnDataset.conversationId) {
+                    await switchConversationById(Number(btnDataset.conversationId));
+                } else if (btnDataset.sellerId) {
+                    await switchConversationBySellerId(Number(btnDataset.sellerId));
+                } else {
+                    console.warn(
+                        "This conversation button has no data-conversation-id or data-seller-id.",
+                    );
+                    alert(
+                        "Este elemento no tiene información para cargar la conversación. Abre el chat desde la página del anuncio.",
+                    );
+                }
+            });
+        });
+
+        // If page gave us a sellerId / conversationId, try to open it
+        let conversationId = await ensureConversation(currentUserId);
+        if (!conversationId && pageConversationId) conversationId = Number(pageConversationId);
+
+        if (!conversationId) {
+            console.log(
+                "No conversation preselected. Click a conversation on the left or open this chat from a post.",
+            );
+            chatInputEl.disabled = true;
+            chatFormEl.querySelector("button[type=submit]")?.setAttribute("disabled", "true");
+        } else {
+            chatInputEl.disabled = false;
+            chatFormEl.querySelector("button[type=submit]")?.removeAttribute("disabled");
+            await switchConversationById(conversationId);
         }
 
-        const convId = await ensureConversation(currentUserId);
-        conv = new Conversation(convId, currentUserId);
-
-        await loadMessages();
-
-        chatForm.addEventListener("submit", async (e) => {
+        chatFormEl.addEventListener("submit", async (e) => {
             e.preventDefault();
-            const text = chatInput.value.trim();
-            if (!text) return;
+            if (!currentConversation) {
+                alert("Selecciona una conversación antes de enviar un mensaje.");
+                return;
+            }
+            const messageText = chatInputEl.value.trim();
+            if (!messageText) return;
             try {
-                chatInput.disabled = true;
-                await conv.sendMessage(text);
-                chatInput.value = "";
+                chatInputEl.disabled = true;
+                await currentConversation.sendMessage(messageText);
+                chatInputEl.value = "";
                 await loadMessages();
             } catch (err) {
                 console.error("Error sending message:", err);
-                alert(err.message || "Error sending message. Please try again.");
+                alert(err.message || "Error sending message. Try again.");
             } finally {
-                chatInput.disabled = false;
+                chatInputEl.disabled = false;
             }
         });
 
         // start polling with visibility-awareness
-        if (pollTimer) clearInterval(pollTimer);
+        if (pollIntervalId) clearInterval(pollIntervalId);
         const startPolling = () => {
-            if (pollTimer) clearInterval(pollTimer);
-            pollTimer = setInterval(loadMessages, POLL_INTERVAL_MS);
+            if (pollIntervalId) clearInterval(pollIntervalId);
+            pollIntervalId = setInterval(loadMessages, POLL_INTERVAL_MS);
         };
 
         startPolling();
 
         document.addEventListener("visibilitychange", () => {
             if (document.visibilityState === "visible") {
-                loadMessages(); // immediately refresh when tab becomes active
+                loadMessages(); // refresh immediately
                 startPolling();
             } else {
-                if (pollTimer) clearInterval(pollTimer); // stop polling when tab is inactive to save resources
+                if (pollIntervalId) clearInterval(pollIntervalId);
             }
         });
 
         window.addEventListener("beforeunload", () => {
-            if (pollTimer) clearInterval(pollTimer);
+            if (pollIntervalId) clearInterval(pollIntervalId);
         });
     } catch (err) {
         console.error("Init chat error:", err);
