@@ -9,18 +9,9 @@ const pool = new Pool({
         port: process.env.DB_PORT
     });
 
-const query = async (sql, values = []) => {
-    const result = await pool.query(sql, values);
-    return result;
-    return new Promise(async (resolve, reject) => {
-        try {
-            
-            resolve(result);
-        } catch (error) {
-            reject(error.message);
-        }
-    });
-}
+const query = (sql, values = []) => {
+    return pool.query(sql, values);
+};
 
 module.exports = { query };
 
