@@ -15,7 +15,7 @@ const chatCardEl = document.querySelector(".chat-main-card");
 let currentConversation = null;
 let pollIntervalId = null;
 let currentUserId = null;
-const POLL_INTERVAL_MS = 2000; // 2s
+const POLL_INTERVAL_MS = 10000; // 10s
 
 // Parse any page-level ids early so they are available during init:
 // - URL query parameters `sellerId` and `conversationId`.
@@ -235,7 +235,7 @@ async function init() {
         });
 
         // Try to open a conversation if the page provided sellerId or conversationId.
-        if (!conversationId && pageConversationId) conversationId = Number(pageConversationId);
+        let conversationId = await ensureConversation(currentUserId);
 
         if (!conversationId) {
             // No conversation selected: disable input and instruct the user to choose one.
