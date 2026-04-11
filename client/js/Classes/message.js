@@ -34,12 +34,10 @@ class Message {
     }
 
     // Create and return a DOM element that represents the message bubble.
-    // - Uses a CSS class to indicate sent vs received so the UI can style it.
-    // - Uses textContent for the message body (this prevents HTML from being executed).
-    // - Appends a separate element with the formatted time.
     renderElement(currentUserId) {
         const article = document.createElement("article");
         article.className = this.isSentBy(currentUserId) ? "message-sent" : "message-received";
+        if (this.id) article.dataset.messageId = this.id;
 
         const textDiv = document.createElement("div");
         textDiv.className = "message-text";

@@ -9,7 +9,7 @@ const { encryptPassword, verifyPassword } = require("../helpers/pwEncrypt.js");
 
 const sunnifyRouter = express.Router();
 
-//  Middleware 
+//  Middleware
 // `isUserAuthenticated` checks for a session user id and returns 401 if missing.
 // Use this on routes that require the user to be logged in.
 const isUserAuthenticated = (req, res, next) => {
@@ -28,7 +28,7 @@ const preventAuthAccess = (req, res, next) => {
     next();
 };
 
-//  Auth routes 
+//  Auth routes
 
 // POST /register
 // Protected by `preventAuthAccess` so only anonymous users may register.
@@ -129,7 +129,7 @@ sunnifyRouter.get("/check-session", (req, res) => {
     else res.status(200).json({ loggedIn: false, userId: null });
 });
 
-// Location data 
+// Location data
 // GET /locations
 // Returns a hierarchical list of countries -> regions -> cities built from three DB queries.
 // Useful for address-picker UI.
@@ -168,7 +168,7 @@ sunnifyRouter.get("/locations", async (req, res) => {
 // Placeholder for `/post-conditions` API (empty handler)
 sunnifyRouter.get("/post-conditions", async (req, res) => {});
 
-//  Post-related API 
+//  Post-related API
 
 // POST /posts
 // Creates a new post. Requires authentication via `isUserAuthenticated`.
@@ -295,7 +295,7 @@ sunnifyRouter.delete("/posts/:id", isUserAuthenticated, async (req, res) => {
         const postResult = await query(
             "SELECT user_id FROM posts WHERE id = $1",
             [id]
-        );
+            );
 
         // checks if owners id is ok
         if (postResult.rows.length === 0) {
@@ -340,7 +340,7 @@ sunnifyRouter.patch("/posts/:id", isUserAuthenticated, async (req, res) => {
         const postResult = await query(
             "SELECT user_id FROM posts WHERE id = $1",
             [id]
-        );
+            );
 
         // checks if owners id is ok
         if (postResult.rows.length === 0) {
@@ -358,7 +358,7 @@ sunnifyRouter.patch("/posts/:id", isUserAuthenticated, async (req, res) => {
     }
 });
 
-//  Profile-related API 
+//  Profile-related API
 
 // GET /users/:id
 // Returns a user's profile summary (id, username, created_at, posts_count).
@@ -417,7 +417,7 @@ sunnifyRouter.get("/users/:id/posts", async (req, res) => {
 // Placeholder: no implementation provided.
 sunnifyRouter.delete("/users/:id", isUserAuthenticated, async (req, res) => {});
 
-// Search 
+// Search
 // POST /search
 // Very small search helper that tokenizes the provided query into keywords.
 // Currently only returns the tokens (no DB search implemented).
@@ -435,7 +435,7 @@ sunnifyRouter.post("/search", async (req, res) => {
 // Some commented-out example routes are present below in the original file.
 */
 
-//  Conversations & Messages 
+//  Conversations & Messages
 
 // POST /conversations/check-or-create
 // Given two user ids (`user1`, `user2`) ensures a conversation exists between them.
@@ -557,7 +557,39 @@ sunnifyRouter.post("/conversations/:id/messages", isUserAuthenticated, async (re
     }
 });
 
-// Error helper 
+// GET /conversations - Returns a list of conversations for the session user with the latest message preview.
+// Validates session, selects conversations where the user is a participant, joins to get the other user's username,
+// and uses a lateral join to get the latest message content and sent_at for sorting.
+sunnifyRouter.get("/conversations", isUserAuthenticated, async (req, res) => {
+    try {
+        const userId = req.session.userId;
+        const result = await query(
+            `SELECT
+                c.id,
+                CASE WHEN c.user1_id = $1 THEN c.user2_id ELSE c.user1_id END AS other_user_id,
+                u.username AS other_username,
+                lm.content AS last_message,
+                lm.sent_at AS last_sent_at
+            FROM conversations c
+            LEFT JOIN users u ON u.id = CASE WHEN c.user1_id = $1 THEN c.user2_id ELSE c.user1_id END
+            LEFT JOIN LATERAL (
+                SELECT content, sent_at
+                FROM messages
+                WHERE conversation_id = c.id
+                ORDER BY sent_at DESC
+                LIMIT 1
+            ) lm ON true
+            WHERE c.user1_id = $1 OR c.user2_id = $1
+            ORDER BY lm.sent_at DESC NULLS LAST`,
+                    [userId],
+        );
+        res.status(200).json(result.rows);
+    } catch (err) {
+        errorResponse(res, err);
+    }
+});
+
+// Error helper
 // `errorResponse` centralizes 500 responses and logs the error to the console.
 const errorResponse = (res, error) => {
     console.log(error);

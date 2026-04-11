@@ -1,15 +1,13 @@
 // client/js/chat.js
 // Page-level chat controller for the Sunnify app.
 // This file wires the chat UI to the backend conversation/message endpoints.
-// The comments below explain each section/behavior in English; the original code is unchanged.
-
 import { Conversation } from "./Classes/conversation.js";
 
 // DOM lookups with several fallback id names to tolerate different page templates.
 // `messagesListEl` is the container where messages will be rendered.
 // `chatFormEl` is the form used to submit new messages.
 // `chatInputEl` is the text input inside the form (found directly or by querying the form).
-const messagesListEl = document.getElementById("messagesListEl") || document.getElementById("messagesList");
+const messagesListEl =document.getElementById("messagesListEl") || document.getElementById("messagesList");
 const chatFormEl = document.getElementById("chatFormEl") || document.getElementById("chatForm");
 let chatInputEl = document.getElementById("chatInputEl") || document.getElementById("chatInput");
 if (!chatInputEl && chatFormEl) chatInputEl = chatFormEl.querySelector("input[type=text], input");
@@ -36,6 +34,25 @@ const conversationIdQuery = pageUrl.searchParams.get("conversationId");
 const chatCardDataset = chatCardEl?.dataset || {};
 const pageConversationId = chatCardDataset.conversationId || conversationIdQuery;
 const pageSellerId = chatCardDataset.sellerId || sellerIdQuery;
+
+/* ===== Helpers (UI / small utilities) ===== */
+
+// scrollToBottom(): scrolls the messages container so the latest messages are visible.
+// Safe-guards if the element is not present.
+function scrollToBottom() {
+    if (!messagesListEl) return;
+    messagesListEl.scrollTop = messagesListEl.scrollHeight;
+}
+
+function setActiveConversationButton(id) {
+    document
+        .querySelectorAll(".chat-user")
+        .forEach((b) =>
+            b.classList.toggle("active", String(b.dataset.conversationId) === String(id)),
+        );
+}
+
+/* ===== API wrappers ===== */
 
 // checkSession(): asks the server whether the browser session contains a logged-in user.
 // - Calls `GET /check-session` with credentials so the session cookie is sent.
@@ -104,12 +121,7 @@ async function createOrGetConversationForSeller(sellerId) {
     }
 }
 
-// scrollToBottom(): scrolls the messages container so the latest messages are visible.
-// Safe-guards if the element is not present.
-function scrollToBottom() {
-    if (!messagesListEl) return;
-    messagesListEl.scrollTop = messagesListEl.scrollHeight;
-}
+/* ===== Conversation / messages control ===== */
 
 // loadMessages(): uses the current Conversation object to fetch messages and render them.
 // - If no conversation is selected, logs a warning and returns.
@@ -137,6 +149,8 @@ async function switchConversationById(conversationId) {
     if (!conversationId) return;
     currentConversation = new Conversation(conversationId, currentUserId);
     await loadMessages();
+    await loadConversationsList();
+    setActiveConversationButton(conversationId);
 }
 
 // switchConversationBySellerId(sellerId):
@@ -150,6 +164,62 @@ async function switchConversationBySellerId(sellerId) {
     }
     await switchConversationById(conversationId);
 }
+
+/* ===== UI render helpers ===== */
+
+async function loadConversationsList() {
+    try {
+        const res = await fetch("/conversations", { credentials: "include" });
+        if (!res.ok) return console.error("Failed to load conversations");
+        const rows = await res.json();
+        const listEl =
+            document.getElementById("conversationsList") ||
+            document.querySelector(".chat-sidebar .conversations");
+        if (!listEl) return;
+        listEl.innerHTML = "";
+
+        if (rows.length === 0) {
+            listEl.innerHTML = '<div class="text-muted small">No conversations yet</div>';
+            return;
+        }
+
+        rows.forEach((c) => {
+            const btn = document.createElement("button");
+            btn.className = "chat-user btn btn-light text-start";
+            btn.dataset.conversationId = c.id;
+            btn.dataset.sellerId = c.other_user_id;
+
+            const inner = document.createElement("div");
+            inner.className = "d-flex align-items-center gap-3";
+
+            const avatar = document.createElement("div");
+            avatar.className =
+                "user-avatar rounded-circle d-flex align-items-center justify-content-center";
+            avatar.textContent = (c.other_username || "U").charAt(0).toUpperCase();
+
+            const content = document.createElement("div");
+            content.className = "flex-grow-1";
+            const title = document.createElement("div");
+            title.className = "fw-semibold";
+            title.textContent = c.other_username || "User";
+            const subtitle = document.createElement("div");
+            subtitle.className = "small text-muted";
+            subtitle.textContent = c.last_message || "";
+
+            content.appendChild(title);
+            content.appendChild(subtitle);
+            inner.appendChild(avatar);
+            inner.appendChild(content);
+            btn.appendChild(inner);
+
+            listEl.appendChild(btn);
+        });
+    } catch (err) {
+        console.error(err);
+    }
+}
+
+/* ===== Init / wiring ===== */
 
 // init(): main initialization sequence executed once on page load.
 // Responsibilities:
@@ -179,26 +249,27 @@ async function init() {
         }
         // Save the authenticated user id for message rendering and sending.
         currentUserId = session.userId;
+        await loadConversationsList(); // Load the conversation list in the sidebar after confirming session.
 
-        // Attach click handlers to conversation list items on the left side.
-        // Each `.chat-user` element should expose either `data-conversation-id` or `data-seller-id`.
-        document.querySelectorAll(".chat-user").forEach((btn) => {
-            btn.addEventListener("click", async () => {
-                const btnDataset = btn.dataset;
-                if (btnDataset.conversationId) {
-                    await switchConversationById(Number(btnDataset.conversationId));
-                } else if (btnDataset.sellerId) {
-                    await switchConversationBySellerId(Number(btnDataset.sellerId));
-                } else {
-                    // Defensive fallback: warn and inform the user how to open conversation.
-                    console.warn(
-                        "This conversation button has no data-conversation-id or data-seller-id.",
-                    );
-                    alert(
-                        "This element has no information to load the conversation. Open the chat from the post page.",
-                    );
-                }
-            });
+        // Instead of attaching individual listeners, we can use event delegation on the container:
+        // This is more efficient and also works for dynamically added conversation buttons.
+        const conversationsContainer =
+            document.getElementById("conversationsList") ||
+            document.querySelector(".chat-sidebar .conversations");
+
+        conversationsContainer?.addEventListener("click", async (e) => {
+            const btn = e.target.closest(".chat-user");
+            if (!btn) return;
+            const { conversationId, sellerId } = btn.dataset;
+            if (conversationId) {
+                await switchConversationById(Number(conversationId));
+            } else if (sellerId) {
+                await switchConversationBySellerId(Number(sellerId));
+            } else {
+                alert(
+                    "This element has no information to load the conversation. Open the chat from the post page.",
+                );
+            }
         });
 
         // Try to open a conversation if the page provided sellerId or conversationId.
@@ -238,6 +309,8 @@ async function init() {
                 await currentConversation.sendMessage(messageText);
                 chatInputEl.value = "";
                 await loadMessages();
+                await loadConversationsList();
+                setActiveConversationButton(currentConversation.id);
             } catch (err) {
                 console.error("Error sending message:", err);
                 alert(err.message || "Error sending message. Try again.");
