@@ -3,25 +3,62 @@ import { createPostCard } from "../Reusable-HTML/components/postCard.js";
 (() => {
     const PROFILE_BACKEND_ROOT_URL = "http://127.0.0.1:3000";
 
+    let pendingDeletePostId = null;
+
     document.addEventListener("DOMContentLoaded", async () => {
         const params = new URLSearchParams(window.location.search);
-        const userId =  parseInt(params.get("id"));
+        const userId = parseInt(params.get("id"));
+        let isOwnProfile = false;
 
         if (Number.isNaN(userId)) {
-            renderMissingPost("Invalid profile id.");
+            renderMissingProfile("Invalid profile id.");
             return;
         }
 
+        const deletePostModalElement = document.getElementById("delete-post-modal");
+        const confirmDeletePostButton = document.getElementById("confirm-delete-post-btn");
+
+        const deletePostModal = deletePostModalElement
+            ? new bootstrap.Modal(deletePostModalElement)
+            : null;
+
+        confirmDeletePostButton?.addEventListener("click", async () => {
+            if (!pendingDeletePostId) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`${PROFILE_BACKEND_ROOT_URL}/posts/${pendingDeletePostId}`, {
+                    method: "delete",
+                    credentials: "include"
+                });
+
+                const result = await response.json();
+
+                if (!response.ok) {
+                    alert(result.error || "Delete failed.");
+                    return;
+                }
+
+                deletePostModal?.hide();
+                pendingDeletePostId = null;
+                await loadProfilePosts(userId, isOwnProfile);
+            } catch (error) {
+                console.error(error);
+                alert("Network error while deleting post.");
+            }
+        });
+
         try {
             const sessionResponse = await fetch(`${PROFILE_BACKEND_ROOT_URL}/check-session`, {
-            method: "get",
-            credentials: "include"
+                method: "get",
+                credentials: "include"
             });
 
-            const sessionResult = await sessionResponse.json()
+            const sessionResult = await sessionResponse.json();
             const sessionUserId = sessionResult.loggedIn ? sessionResult.userId : null;
 
-            const isOwnProfile = sessionUserId === userId;
+            isOwnProfile = sessionUserId === userId;
 
             const profileResponse = await fetch(`${PROFILE_BACKEND_ROOT_URL}/users/${userId}`, {
                 method: "get"
@@ -35,33 +72,41 @@ import { createPostCard } from "../Reusable-HTML/components/postCard.js";
             }
 
             renderProfile(profileResult);
-
-            const postsResponse = await fetch(`/users/${userId}/posts`);
-            const postsResult = await postsResponse.json();
-
-            renderProfilePosts(postsResult, isOwnProfile)
+            await loadProfilePosts(userId, isOwnProfile);
         } catch (error) {
-            console.error(error)
+            console.error(error);
+            renderMissingProfile("Network error while loading profile.");
         }
-    })
+    });
 
     const renderProfile = (profile) => {
         setText("profile-name", profile.username);
-        //setText("profile-rating", ;
         setText("profile-posts-count", profile.posts_count);
-        //setText("profile-saved-posts-count", )
         setText("profile-created-at", formatMemberSince(profile.created_at));
-    }
+    };
 
-    const renderMissingProfile = () => {
+    const renderMissingProfile = (message) => {
         setText("profile-name", "Profile unavailable");
         setText("profile-rating", "-");
         setText("profile-posts-count", "Unavailable");
         setText("profile-saved-posts-count", "-");
-        setText("profile-created-at", "Posted date unavailable");
+        setText("profile-created-at", message || "Member since unavailable");
     };
 
-    // Profile listings
+    const loadProfilePosts = async (userId, isOwnProfile) => {
+        const postsResponse = await fetch(`${PROFILE_BACKEND_ROOT_URL}/users/${userId}/posts`, {
+            method: "get"
+        });
+
+        const postsResult = await postsResponse.json();
+
+        if (!postsResponse.ok) {
+            throw new Error(postsResult.error || "Profile listings could not be loaded.");
+        }
+
+        renderProfilePosts(postsResult, isOwnProfile);
+    };
+
     const renderProfilePosts = (posts, isOwnProfile) => {
         const postsList = document.getElementById("profile-posts-list");
 
@@ -76,14 +121,14 @@ import { createPostCard } from "../Reusable-HTML/components/postCard.js";
 
         postsList.innerHTML = "";
 
-        posts.forEach(post => {
+        posts.forEach((post) => {
             const postCard = createPostCard(post, {
                 columnClassName: "col-12 col-md-6 col-xl-4",
                 showFavoriteButton: false
             });
 
             if (isOwnProfile) {
-                attachPostManagementActions(postCard, post)
+                attachPostManagementActions(postCard, post);
             }
 
             postsList.appendChild(postCard);
@@ -97,40 +142,45 @@ import { createPostCard } from "../Reusable-HTML/components/postCard.js";
     const attachPostManagementActions = (postCard, post) => {
         const card = postCard.querySelector(".img-container.card");
 
-        if (!card){
+        if (!card) {
             return;
         }
 
-        const actionsWrapper = document.createElement("div")
-        actionsWrapper.className = "card-footer d-flex justify-content-between align-items-center gap-2"
+        const actionsWrapper = document.createElement("div");
+        actionsWrapper.className = "card-footer d-flex justify-content-between align-items-center gap-2";
 
-        // edit btn
         const editButton = document.createElement("button");
-        editButton.className = 'btn btn-outline-primary btn-sm'
+        editButton.className = "btn btn-outline-primary btn-sm";
         editButton.textContent = "Edit";
-
         editButton.addEventListener("click", (event) => {
             event.preventDefault();
             event.stopPropagation();
-            window.location.href = ``
-        })
-        // delete btn
-        const deleteButton = document.createElement("button")
-        deleteButton.className = 'btn btn-outline-danger btn-sm'
-        deleteButton.textContent = "Delete";
+            window.location.href = `editpost.html?id=${post.id}`;
+        });
 
+        const deleteButton = document.createElement("button");
+        deleteButton.className = "btn btn-outline-danger btn-sm";
+        deleteButton.textContent = "Delete";
         deleteButton.addEventListener("click", (event) => {
             event.preventDefault();
             event.stopPropagation();
 
-            // here will be confirm modal
-        })
+            pendingDeletePostId = post.id;
 
-        actionsWrapper.appendChild(editButton)
-        actionsWrapper.appendChild(deleteButton)
+            const deletePostModalElement = document.getElementById("delete-post-modal");
 
+            if (!deletePostModalElement) {
+                return;
+            }
+
+            const deletePostModal = bootstrap.Modal.getOrCreateInstance(deletePostModalElement);
+            deletePostModal.show();
+        });
+
+        actionsWrapper.appendChild(editButton);
+        actionsWrapper.appendChild(deleteButton);
         card.appendChild(actionsWrapper);
-    }
+    };
 
     const setText = (id, value) => {
         const element = document.getElementById(id);
@@ -140,18 +190,17 @@ import { createPostCard } from "../Reusable-HTML/components/postCard.js";
         }
     };
 
-    // format member-since
     const formatMemberSince = (memberSince) => {
-    if (!memberSince) {
-        return "Member since unavailable";
-    }
+        if (!memberSince) {
+            return "Member since unavailable";
+        }
 
-    const date = new Date(memberSince);
+        const date = new Date(memberSince);
 
-    if (Number.isNaN(date.getTime())) {
-        return "Member since unavailable";
-    }
+        if (Number.isNaN(date.getTime())) {
+            return "Member since unavailable";
+        }
 
-    return `${date.toLocaleDateString()}`;
-};
+        return `${date.toLocaleDateString()}`;
+    };
 })();
