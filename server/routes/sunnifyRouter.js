@@ -330,6 +330,7 @@ sunnifyRouter.delete("/posts/:id", isUserAuthenticated, async (req, res) => {
 //   Also: the route currently does not perform any update, update logic is missing.
 sunnifyRouter.patch("/posts/:id", isUserAuthenticated, async (req, res) => {
     try {
+        console.log("PATCH route hit");
         const id = parseInt(req.params.id);
 
         if (Number.isNaN(id)) {
@@ -353,6 +354,71 @@ sunnifyRouter.patch("/posts/:id", isUserAuthenticated, async (req, res) => {
         if (postOwnerId !== req.session.userId) {
             return res.status(403).json({ error: "Post is not yours" });
         }
+
+        const { title, description, price, location, category, condition, status } = req.body;
+
+        console.log("PATCH /posts payload:", {
+            id,
+            title,
+            description,
+            price,
+            location,
+            category,
+            condition,
+            status,
+            sessionUserId: req.session.userId
+        });
+
+        if (!title || !description || !location || !category || !condition) {
+            return res.status(400).json({ error: "Missing required fields" });
+        }
+
+        const parsedPrice = Number(price);
+
+        if (Number.isNaN(parsedPrice) || parsedPrice < 0){
+            return res.status(400).json({ error: "Invalid price" })
+        }
+
+        const normalizedCity = location.split(",")[0].trim();
+        const normalizedCategory = category === "Clothing" ? "Clothes" : category;
+        const normalizedCondition = 
+            condition === "Like new"
+            ? "Excellent"
+            : condition === "Used"
+            ? "Acceptable"
+            : condition;
+
+        const normalizedStatus = status 
+            ? status.charAt(0).toUpperCase() + status.slice(1).toLowerCase()
+            : "Available";
+
+        const updateResult = await query(
+            `
+            UPDATE posts
+            SET
+                title = $1,
+                description = $2,
+                price = $3,
+                city_id = COALESCE((SELECT id FROM cities WHERE name = $4), 0),
+                category_id = COALESCE((SELECT id FROM post_categories WHERE name = $5), 0),
+                condition = COALESCE((SELECT id FROM post_condition WHERE condition = $6), 0),
+                status = COALESCE((SELECT id FROM post_status WHERE status = $7), 0),
+                last_updated = NOW()
+            WHERE id = $8
+            RETURNING id
+            `,
+            [ 
+                title,
+                description,
+                parsedPrice,
+                normalizedCity,
+                normalizedCategory,
+                normalizedCondition,
+                normalizedStatus,
+                id
+            ]
+        );
+        res.status(200).json({ id: updateResult.rows[0].id });
     } catch (error) {
         errorResponse(res, error);
     }
