@@ -55,7 +55,7 @@ locations.getLocations()
     .then(() => {
         buildLocationFlatArray();
     })
-    .catch(error => console.error(`Failed to reach location data from database: ${error}`));
+    .catch(error => console.error(`Failed to read location data from database: ${error}`));
 
 const buildLocationFlatArray = () => {
     locationsFlatArray = [];
@@ -243,6 +243,21 @@ export const getSelectedLocation = () => selectedLocation;
 
 export const getTypedLocationValue = () => {
     return locationInputField ? locationInputField.value.trim() : "";
+};
+
+export const clearSelectedLocation = () => {
+    selectedLocation = null;
+    selectedIndex = -1;
+
+    if (locationInputField) {
+        locationInputField.value = "";
+        locationInputField.classList.remove("is-invalid");
+    }
+
+    if (locationDropdown) {
+        locationDropdown.innerHTML = "";
+        locationDropdown.style.display = "none";
+    }
 };
 
 export const markLocationInvalid = () => {
