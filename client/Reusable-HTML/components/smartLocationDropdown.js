@@ -256,3 +256,10 @@ export const clearLocationInvalid = () => {
         locationInputField.classList.remove("is-invalid");
     }
 };
+
+// for edit post
+export const setTypedLocationValue = (value) => {
+    if (locationInputField) {
+        locationInputField.value = value ?? "";
+    }
+};
