@@ -134,41 +134,81 @@ sunnifyRouter.get("/check-session", (req, res) => {
 // Returns a hierarchical list of countries -> regions -> cities built from three DB queries.
 // Useful for address-picker UI.
 sunnifyRouter.get("/locations", async (req, res) => {
-    // Fetch countries, regions, and cities lists
-    let result = await query("SELECT id, name FROM countries ORDER BY name ASC");
-    const countries = result.rows;
+    try {
+        // Fetch countries, regions, and cities lists
+        let result = await query("SELECT id, name FROM countries ORDER BY name ASC");
+        const countries = result.rows;
 
-    result = await query("SELECT id, name, country_id FROM regions ORDER BY name ASC");
-    const regions = result.rows;
+        result = await query("SELECT id, name, country_id FROM regions ORDER BY name ASC");
+        const regions = result.rows;
 
-    result = await query("SELECT id, name, region_id FROM cities ORDER BY name ASC");
-    const cities = result.rows;
+        result = await query("SELECT id, name, region_id FROM cities ORDER BY name ASC");
+        const cities = result.rows;
 
-    // Build structured JSON
-    const locationData = countries.map((country) => ({
-        id: country.id,
-        country: country.name,
-        regions: regions
-            .filter((region) => region.country_id === country.id)
-            .map((region) => ({
-                id: region.id,
-                region: region.name,
-                cities: cities
-                    .filter((city) => city.region_id === region.id)
-                    .map((city) => ({
-                        id: city.id,
-                        city: city.name,
-                    })),
-            })),
-    }));
+        // Build structured JSON
+        const locationData = countries.map((country) => ({
+            id: country.id,
+            country: country.name,
+            regions: regions
+                .filter((region) => region.country_id === country.id)
+                .map((region) => ({
+                    id: region.id,
+                    region: region.name,
+                    cities: cities
+                        .filter((city) => city.region_id === region.id)
+                        .map((city) => ({
+                            id: city.id,
+                            city: city.name,
+                        })),
+                })),
+        }));
 
-    res.status(200).json(locationData);
+        res.status(200).json(locationData);
+    } catch (error) {
+        errorResponse(res, error);
+    }
 });
 
-// Placeholder for `/post-conditions` API (empty handler)
-sunnifyRouter.get("/post-conditions", async (req, res) => {});
+sunnifyRouter.get("/categories", async (req, res) => {
+    try {
+        let result = await query("SELECT id, name FROM post_categories ORDER BY id ASC");
+        const categories = result.rows;
 
-//  Post-related API
+        result = await query("SELECT id, name, category_id FROM post_subcategories ORDER BY id ASC");
+        const subcategories = result.rows;
+
+        const categoryData = categories.map((category) => ({
+            id: category.id,
+            category: category.name,
+            subcategories: subcategories
+                .filter((subcategory) => subcategory.category_id === category.id)
+                .map((subcategory) => ({
+                    id: subcategory.id,
+                    subcategory: subcategory.name
+                }))
+        }));
+
+        res.status(200).json(categoryData);
+    } catch (error) {
+        errorResponse(res, error);
+    }
+});
+
+sunnifyRouter.get("/post-conditions", async (req, res) => {
+    try {
+        const result = await query("SELECT id, condition FROM post_condition WHERE id > 0 ORDER BY id ASC");
+        const conditions = result.rows;
+
+        const conditionData = conditions.map((condition) => ({
+            id: condition.id,
+            condition: condition.condition
+        }));
+
+        res.status(200).json(conditionData);
+    } catch (error) {
+        errorResponse(res, error);
+    }
+});
 
 // POST /posts
 // Creates a new post. Requires authentication via `isUserAuthenticated`.
@@ -413,23 +453,119 @@ sunnifyRouter.get("/users/:id/posts", async (req, res) => {
     }
 });
 
+// Search System
+sunnifyRouter.post("/search-results", async (req, res) => {
+    try {
+        const searchObject = buildSearchObject(req.body);
+
+        const filterConditions = [];
+        const queryParams = [];
+        let nextParamIndex = 1;
+
+        // Helper function for handing adding query params
+        const addParam = (param) => {
+            queryParams.push(param);
+            const paramIndex = `$${nextParamIndex}`;
+            nextParamIndex++;
+            return paramIndex;
+        };
+
+        // Helper function for checking and adding param
+        const checkAndAddParam = (sqlColumn, comparator, filterVar) => {
+            if (filterVar !== null) filterConditions.push(`${sqlColumn} ${comparator} ${addParam(filterVar)}`);
+        };
+
+        // Location filter
+        if (searchObject.location) {
+            const locationType = searchObject.location.type;
+            const locationId = searchObject.location.id;
+
+            const tableForLocationLookup =
+                locationType === "city" ? "posts" :
+                    locationType === "region" ? "cities" :
+                        "regions";
+
+            filterConditions.push(`${tableForLocationLookup}.${locationType}_id = ${addParam(locationId)}`);
+        }
+
+        // Category filters
+        checkAndAddParam("posts.category_id", "=", searchObject.filters.categoryId);
+        checkAndAddParam("posts.subcategory_id", "=", searchObject.filters.subcategoryId);
+
+        // Condition filter
+        checkAndAddParam("posts.condition", "=", searchObject.filters.conditionId);
+
+        // Price filters
+        checkAndAddParam("posts.price", ">=", searchObject.filters.priceMin);
+        checkAndAddParam("posts.price", "<=", searchObject.filters.priceMax);
+
+        // Build SQL clauses
+        const selectClause = `
+            SELECT
+            posts.id,
+            posts.title,
+            posts.description,
+            posts.price,
+            posts.city_id,
+            posts.category_id,
+            posts.subcategory_id,
+            posts.condition AS condition_id,
+            posts.created_at,
+            posts.last_updated,
+
+            cities.name AS city_name,
+            regions.name AS region_name,
+            countries.name AS country_name,
+
+            post_categories.name AS category_name,
+            post_subcategories.name AS subcategory_name,
+            post_condition.condition AS condition_name
+        `;
+        const fromAndJoinClause = `
+            FROM posts
+
+            JOIN cities ON cities.id = posts.city_id
+            JOIN regions ON regions.id = cities.region_id
+            JOIN countries ON countries.id = regions.country_id
+
+            JOIN post_categories ON post_categories.id = posts.category_id
+            JOIN post_subcategories ON post_subcategories.id = posts.subcategory_id
+
+            JOIN post_condition ON post_condition.id = posts.condition
+        `;
+        const whereClause = filterConditions.length > 0 ? `WHERE ${filterConditions.join(" AND ")}` : "";
+
+        // Sorting clause
+        const sortType = searchObject.sortType;
+        const sortClause =
+            sortType === "newest" ? "ORDER BY posts.created_at DESC" :
+                sortType === "oldest" ? "ORDER BY posts.created_at ASC" :
+                    sortType === "price-asc" ? "ORDER BY posts.price ASC" :
+                        sortType === "price-desc" ? "ORDER BY posts.price DESC" :
+                            "";
+
+        // Build SQL query
+        const sql = `${selectClause} ${fromAndJoinClause} ${whereClause} ${sortClause}`;
+
+        // Fetch data
+        const result = await query(sql, queryParams);
+        const posts = result.rows;
+
+        return res.status(200).json({
+            searchObject,
+            posts,
+            totalCount: posts.length
+        });
+    } catch (error) {
+        errorResponse(res, error);
+    }
+});
+
 // DELETE /users/:id
 // Placeholder: no implementation provided.
 sunnifyRouter.delete("/users/:id", isUserAuthenticated, async (req, res) => {});
 
-// Search
-// POST /search
-// Very small search helper that tokenizes the provided query into keywords.
-// Currently only returns the tokens (no DB search implemented).
-sunnifyRouter.post("/search", async (req, res) => {
-    const searchText = req.body.query;
-    if (!searchText || !searchText.trim()) {
-        return res.status(400).json({ error: "No search text provided" });
-    }
-    const normalizedText = searchText.trim().toLowerCase();
-    const keywords = normalizedText.split(/[\s,;.]+/).filter(Boolean);
-    res.json({ keywords });
-});
+
 
 /*
 // Some commented-out example routes are present below in the original file.
@@ -589,13 +725,81 @@ sunnifyRouter.get("/conversations", isUserAuthenticated, async (req, res) => {
     }
 });
 
-// Error helper
-// `errorResponse` centralizes 500 responses and logs the error to the console.
+
+
+
+// Convenience and helper functions
 const errorResponse = (res, error) => {
     console.log(error);
     const errorMessage =
         typeof error === "string" ? error : error.message || "Internal server error";
     res.status(500).json({ error: errorMessage });
+};
+
+const normalizeText = (value) => {
+    return typeof value === "string" ? value.trim() : "";
+};
+
+const normalizeSearchText = (rawText) => {
+    return normalizeText(rawText)
+        .toLowerCase()
+        .replace(/\s+/g, " ");
+};
+
+const tokenizeSearchText = (normalizedText) => {
+    if (!normalizedText) {
+        return [];
+    }
+
+    return [...new Set(normalizedText.split(" ").filter(Boolean))];
+};
+
+const normalizeInteger = (value) => {
+    if (value === "" || value === null || value === undefined) {
+        return null;
+    }
+
+    const parsedValue = Number(value);
+    return Number.isInteger(parsedValue) ? parsedValue : null;
+};
+
+const normalizeNumber = (value) => {
+    if (value === "" || value === null || value === undefined) {
+        return null;
+    }
+
+    const parsedValue = Number(value);
+    return Number.isNaN(parsedValue) ? null : parsedValue;
+};
+
+const buildSearchObject = (rawRequest = {}) => {
+    const searchTermsRaw = normalizeText(rawRequest.searchTermsRaw);
+    const searchTermsNormalized = normalizeSearchText(searchTermsRaw);
+    const searchTermsTokens = tokenizeSearchText(searchTermsNormalized);
+
+    const locationType = normalizeText(rawRequest.locationType).toLowerCase();
+    const locationId = normalizeInteger(rawRequest.locationId);
+
+    return {
+        searchTermsRaw,
+        searchTermsNormalized,
+        searchTermsTokens,
+        location: locationType && locationId
+            ? {
+                name: normalizeText(rawRequest.locationName),
+                type: locationType,
+                id: locationId
+            }
+            : null,
+        sortType: normalizeText(rawRequest.sortType) || "relevance",
+        filters: {
+            categoryId: normalizeInteger(rawRequest.filters?.categoryId),
+            subcategoryId: normalizeInteger(rawRequest.filters?.subcategoryId),
+            conditionId: normalizeInteger(rawRequest.filters?.conditionId),
+            priceMin: normalizeNumber(rawRequest.filters?.priceMin),
+            priceMax: normalizeNumber(rawRequest.filters?.priceMax)
+        }
+    };
 };
 
 module.exports = { sunnifyRouter };
