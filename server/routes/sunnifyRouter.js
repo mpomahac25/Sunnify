@@ -1,7 +1,6 @@
 // server/routes/sunnifyRouter.js
 // Express router that implements the Sunnify backend API for auth, posts, profiles,
 // search, locations, and a simple conversations/messages system.
-// The original code is unchanged; the comments below explain purpose and behavior.
 
 const express = require("express");
 const { query } = require("../helpers/db.js");
@@ -55,8 +54,8 @@ sunnifyRouter.post("/register", preventAuthAccess, async (req, res) => {
 
         // Create new user in database
         result = await query(
-            "INSERT INTO users (username, email, password_hash) VALUES ($1, $2, $3) RETURNING id",
-            [req.body.username, req.body.email, pwEncrypted],
+            `INSERT INTO users (username, email, password_hash) VALUES ($1, $2, $3) RETURNING id`,
+            [req.body.username, req.body.email, pwEncrypted]
         );
         res.status(200).json({ id: result.rows[0].id });
     } catch (error) {
@@ -292,10 +291,7 @@ sunnifyRouter.delete("/posts/:id", isUserAuthenticated, async (req, res) => {
         }
 
         // selects id of the owner of the post
-        const postResult = await query(
-            "SELECT user_id FROM posts WHERE id = $1",
-            [id]
-            );
+        const postResult = await query("SELECT user_id FROM posts WHERE id = $1", [id]);
 
         // checks if owners id is ok
         if (postResult.rows.length === 0) {
@@ -337,10 +333,7 @@ sunnifyRouter.patch("/posts/:id", isUserAuthenticated, async (req, res) => {
         }
 
         // selects id of the owner of the post
-        const postResult = await query(
-            "SELECT user_id FROM posts WHERE id = $1",
-            [id]
-            );
+        const postResult = await query("SELECT user_id FROM posts WHERE id = $1", [id]);
 
         // checks if owners id is ok
         if (postResult.rows.length === 0) {
@@ -435,159 +428,169 @@ sunnifyRouter.post("/search", async (req, res) => {
 // Some commented-out example routes are present below in the original file.
 */
 
-//  Conversations & Messages
+// Chat System: Conversations & Messages
 
-// POST /conversations/check-or-create
-// Given two user ids (`user1`, `user2`) ensures a conversation exists between them.
-// Requires authentication and verifies the session user is one of the two participants.
-// If a conversation already exists (either order), returns 200 with `conversationId`.
-// Otherwise inserts a new conversation and returns 201 with the new id.
-// Note: the insertion logic chooses an ordering for user1/user2 so the session user
-//   becomes the first participant when inserting.
-sunnifyRouter.post("/conversations/check-or-create", isUserAuthenticated, async (req, res) => {
+// Create a conversation between 2 users if it does not exist, or return the id if it already exists
+sunnifyRouter.post("/conversation/check-or-create", isUserAuthenticated, async (req, res) => {
     try {
+        // Make the received ids into a number
         const user1 = Number(req.body.user1);
         const user2 = Number(req.body.user2);
+        // User id authenticated (logged one)
         const sessionUser = req.session.userId;
 
-        if (Number.isNaN(user1) || Number.isNaN(user2)) {
+        // Basic validation, numbers must be valid
+        if (Number.isNaN(user1) || Number.isNaN(user1)) {
             return res.status(400).json({ error: "Invalid user ids" });
         }
 
+        // Validation: only can create the conversation if the logged user is one of the 2 
         if (sessionUser !== user1 && sessionUser !== user2) {
-            return res
-                .status(403)
-                .json({ error: "Forbidden: session user not part of this conversation" });
+            return res.status(403).json({ error: "Forbidden: session user not part of this conversation" });
         }
 
+        // Check if the conversation already exists between 2 users (in whatever order)
         const result = await query(
             `SELECT id FROM conversations
-            WHERE (user1_id = $1 AND user2_id = $2) OR (user1_id = $2 AND user2_id = $1)
-            LIMIT 1`,
+                WHERE (user1_id = $1 AND user2_id = $2) or (user1_id = $2 AND user2_id = $1)
+                LIMIT 1`,
             [user1, user2],
         );
 
+        // If it exists, return the existing id
         if (result.rows.length > 0) {
             return res.status(200).json({ conversationId: result.rows[0].id });
         }
 
-        const user1ForInsert = sessionUser;
-        const user2ForInsert = sessionUser === user1 ? user2 : user1;
-
+        // If it doesn't exist, create the conversation and return the new id
         const insertResult = await query(
             `INSERT INTO conversations (user1_id, user2_id) VALUES ($1, $2) RETURNING id`,
-            [user1ForInsert, user2ForInsert],
+            [user1, user2]
         );
-
         return res.status(201).json({ conversationId: insertResult.rows[0].id });
     } catch (error) {
         errorResponse(res, error);
     }
 });
 
-// GET /conversations/:id/messages
-// Returns the messages for a conversation ordered by `sent_at` ascending.
-// Checks that conversation exists and that the session user is a participant.
+// Get messages of a conversation, only if the logged user is part of the conversation (user1 or user2)
 sunnifyRouter.get("/conversations/:id/messages", isUserAuthenticated, async (req, res) => {
+    // Start try/catch to capture error and prevent the server from crashing
     try {
-        const convId = Number(req.params.id);
-        if (Number.isNaN(convId)) return res.status(400).json({ error: "Invalid conversation id" });
+    // Take the conversation id and the authenticated user
+    const conversationID = Number(req.params.id);
+    const sessionUser = req.session.userId;
 
-        const convRes = await query(
-            "SELECT user1_id, user2_id FROM conversations WHERE id = $1", 
-            [convId],
-        );
-        if (convRes.rows.length === 0)
-            return res.status(404).json({ error: "Conversation not found" });
+    // Validate the conversation id is a number
+    if(Number.isNaN(conversationID) ){
+        return res.status(400).json({error: "Invalid conversation id"});
+    }
 
-        const { user1_id, user2_id } = convRes.rows[0];
-        const sessionUser = req.session.userId;
-        if (user1_id !== sessionUser && user2_id !== sessionUser) {
-            return res.status(403).json({ error: "Forbidden: not part of this conversation" });
-        }
+    // Searches for the conversation in the database
+    const convResult = await query(
+        `SELECT * FROM conversations WHERE id = $1`,
+            [conversationID],
+    );
+    if (convResult.rows.length === 0) {
+        return res.status(404).json({ error: "Conversation not found"});
+    }
+    const conversation = convResult.rows[0];
 
-        const messagesRes = await query(
-            `SELECT id, conversation_id, sender_id, receiver_id, content, sent_at
-            FROM messages
-            WHERE conversation_id = $1
-            ORDER BY sent_at ASC`,
-            [convId],
-        );
+    // Checks that the user is part of the conversation (either user1 or user2)
+    if (sessionUser !== conversation.user1_id && sessionUser !== conversation.user2_id){
+        return res.status(403).json({ error: "Forbidden: user not part of this conversation" });
+    }
 
-        res.status(200).json(messagesRes.rows);
-    } catch (error) {
-        errorResponse(res, error);
+    // Consults the messages of the conversation and returns them ordered by sent_at
+    const messagesFromConv = await query (
+        `SELECT * FROM messages
+        WHERE conversation_id = $1
+        ORDER BY sent_at ASC`,
+        [conversationID]
+    );
+    // Returns the messages in JSON format with status 200 (OK)
+    return res.status(200).json({ messages: messagesFromConv.rows });
+    }   // If any error happens, catch it and return a 500 response with the error message 
+        catch(error) {
+            errorResponse(res, error);
     }
 });
 
-// POST /conversations/:id/messages
-// Inserts a new message into a conversation.
-// Validates conversation id, non-empty trimmed content, and that sender is a participant.
-// Computes the receiverId by picking the other participant and returns the inserted id and sent_at.
+// Send a message in a conversation, only if the logged user is part of the conversation (user1 or user2)
+// The route /conversations/:id/messages returns the interted message and all its data
 sunnifyRouter.post("/conversations/:id/messages", isUserAuthenticated, async (req, res) => {
-    try {
-        const convId = Number(req.params.id);
-        const content = (req.body.content || "").trim();
-        if (Number.isNaN(convId)) return res.status(400).json({ error: "Invalid conversation id" });
-        if (!content) return res.status(400).json({ error: "Message content required" });
+    try{
+        const conversationID = Number(req.params.id);
+        const sessionUser = req.session.userId;
 
-        const convRes = await query("SELECT user1_id, user2_id FROM conversations WHERE id = $1", [
-            convId,
-        ]);
-        if (convRes.rows.length === 0)
-            return res.status(404).json({ error: "Conversation not found" });
-
-        const { user1_id, user2_id } = convRes.rows[0];
-        const senderId = req.session.userId;
-        if (senderId !== user1_id && senderId !== user2_id) {
-            return res.status(403).json({ error: "Forbidden: not part of this conversation" });
+        // Validate id
+        if(Number.isNaN(conversationID)){
+            return res.status(400).json({error: "Invalid conversation id"});
         }
 
-        const receiverId = senderId === user1_id ? user2_id : user1_id;
+        // Validate text
+        const msgText = req.body.text;
+        // Check that the text is not empty or just spaces
+        if(!msgText || !msgText.trim()) {
+            return res.status(400).json({error: "Message can't be empty"});
+        }
 
-        const insertRes = await query(
-            `INSERT INTO messages (conversation_id, sender_id, receiver_id, content)
-            VALUES ($1, $2, $3, $4) RETURNING id, sent_at`,
-            [convId, senderId, receiverId, content],
+        // Search for the conversation
+        const convResult = await query (
+            `SELECT* from conversations WHERE id = $1`,
+                [conversationID]
+        )
+        if(convResult.rows.length === 0) {
+            return res.status(404).json({error: "Conversation not found"});
+        }
+        const conversation = convResult.rows[0];
+
+        // Verify that the authenticated user is participan of the conversation
+        if (sessionUser !== conversation.user1_id && sessionUser !== conversation.user2_id){
+            return res.status(403).json({error: "User is not part of this conversation"});
+        }
+
+        // Determine the receiver id (the other user in the conversation
+        const receiverId = (sessionUser === conversation.user1_id)
+            ? conversation.user2_id
+            : conversation.user1_id;
+
+        // Insert the message
+        const insertResult = await query(
+        `INSERT INTO messages (conversation_id, sender_id, receiver_id, content, sent_at)
+        VALUES ($1, $2, $3, $4, NOW())
+        RETURNING *`,
+        [conversationID, sessionUser, receiverId, msgText]
         );
+        
+        // Return the inserted messages
+        return res.status(201).json({ message: insertResult.rows[0]});
 
-        res.status(201).json({ id: insertRes.rows[0].id, sent_at: insertRes.rows[0].sent_at });
-    } catch (error) {
+    } catch (error){
         errorResponse(res, error);
     }
 });
 
-// GET /conversations - Returns a list of conversations for the session user with the latest message preview.
-// Validates session, selects conversations where the user is a participant, joins to get the other user's username,
-// and uses a lateral join to get the latest message content and sent_at for sorting.
 sunnifyRouter.get("/conversations", isUserAuthenticated, async (req, res) => {
-    try {
-        const userId = req.session.userId;
-        const result = await query(
-            `SELECT
-                c.id,
-                CASE WHEN c.user1_id = $1 THEN c.user2_id ELSE c.user1_id END AS other_user_id,
-                u.username AS other_username,
-                lm.content AS last_message,
-                lm.sent_at AS last_sent_at
-            FROM conversations c
-            LEFT JOIN users u ON u.id = CASE WHEN c.user1_id = $1 THEN c.user2_id ELSE c.user1_id END
-            LEFT JOIN LATERAL (
-                SELECT content, sent_at
-                FROM messages
-                WHERE conversation_id = c.id
-                ORDER BY sent_at DESC
-                LIMIT 1
-            ) lm ON true
-            WHERE c.user1_id = $1 OR c.user2_id = $1
-            ORDER BY lm.sent_at DESC NULLS LAST`,
-                    [userId],
-        );
-        res.status(200).json(result.rows);
-    } catch (err) {
-        errorResponse(res, err);
+    try{
+    const sessionUser = req.session.userId;
+    
+    // Search for all the conversations where the user is participating 
+    const result = await query (
+        `SELECT * FROM conversations
+            WHERE user1_id = $1 OR user2_id = $1
+            ORDER BY id DESC`,
+            [sessionUser]
+    );
+
+    // Return the array of conversations with status 200 (OK)
+    return res.status(200).json({ conversations: result.rows });
+    } catch(error){
+        errorResponse(res, error);
     }
 });
+
+// End of Chat System: Conversations & Messages
 
 // Error helper
 // `errorResponse` centralizes 500 responses and logs the error to the console.

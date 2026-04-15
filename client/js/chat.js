@@ -1,312 +1,131 @@
-// client/js/chat.js
-// Page-level chat controller for the Sunnify app.
-// This file wires the chat UI to the backend conversation/message endpoints.
-import { Conversation } from "./Classes/conversation.js";
+import Message from "./Classes/message.js";
+import Conversation from "./Classes/conversation.js";
 
-// DOM lookups with several fallback id names to tolerate different page templates.
-const messagesListEl =document.getElementById("messagesListEl") || document.getElementById("messagesList");
-const chatFormEl = document.getElementById("chatFormEl") || document.getElementById("chatForm");
-let chatInputEl = document.getElementById("chatInputEl") || document.getElementById("chatInput");
-if (!chatInputEl && chatFormEl) chatInputEl = chatFormEl.querySelector("input[type=text], input");
-// `chatCardEl` is a container element that may include dataset attributes (conversationId, sellerId).
-const chatCardEl = document.querySelector(".chat-main-card");
+// chat.js defines the main logic of the chat, how the conversations and messages will be handled, created, stored shown and sent
+// Here I'll decide how the chat will work and how to use the conversation and message classes to make the chat work
 
-// In-memory runtime state:
+// Define the variables that will hold the chat data
+// camelCase is used for the variables to follow the JavaScript naming convention
+let conversations = [];
 let currentConversation = null;
-let pollIntervalId = null;
-let currentUserId = null;
-const POLL_INTERVAL_MS = 10000; // 10s
+let currentUser = null;
 
-// Parse any page-level ids early so they are available during init:
-// - URL query parameters `sellerId` and `conversationId`.
-// - dataset attributes on the chat card element as fallback.
-// The `pageConversationId` and `pageSellerId` values are used when opening a conversation.
-const pageUrl = new URL(window.location.href);
-const sellerIdQuery = pageUrl.searchParams.get("sellerId");
-const conversationIdQuery = pageUrl.searchParams.get("conversationId");
-const chatCardDataset = chatCardEl?.dataset || {};
-const pageConversationId = chatCardDataset.conversationId || conversationIdQuery;
-const pageSellerId = chatCardDataset.sellerId || sellerIdQuery;
+// Main functions of the chat
 
-/* ===== Helpers (UI / small utilities) ===== */
-
-// scrollToBottom(): scrolls the messages container so the latest messages are visible.
-// Safe-guards if the element is not present.
-function scrollToBottom() {
-    if (!messagesListEl) return;
-    messagesListEl.scrollTop = messagesListEl.scrollHeight;
+// Load conversations from the backend
+async function loadConversations() {
+    const res = await fetch('/conversations', { credentials: 'include' });
+    const data = await res.json();
+    conversations = data.conversations.map(conv =>
+        new Conversation(
+            conv.id,
+            [conv.user1_id, conv.user2_id], 
+            []
+        )
+    );
+    showConversationsList();
 }
 
-function setActiveConversationButton(id) {
-    document
-        .querySelectorAll(".chat-user")
-        .forEach((b) =>
-            b.classList.toggle("active", String(b.dataset.conversationId) === String(id)),
-        );
+// Format the date to show only the time in a more readable format
+function formatTime(dateString) {
+    if (!dateString) return "";
+    const date = new Date(dateString);
+    return date.toLocaleString([], { dateStyle: 'short', timeStyle: 'short' });
 }
 
-/* ===== API wrappers ===== */
+// This function will be called when the user clicks on a conversation, it will set the current conversation and show the messages of that conversation
+function showMsg() {
+    const messagesEl = document.getElementById("messagesListEl");
+    if (!messagesEl) return;
+    messagesEl.innerHTML = "";
+    if (!currentConversation) return;
 
-// checkSession(): asks the server whether the browser session contains a logged-in user.
-async function checkSession() {
-    const response = await fetch("/check-session", { credentials: "include" });
-    if (!response.ok) throw new Error("Couldn't verify session");
-    return response.json();
+    currentConversation.messages.forEach(msg => {
+        const isSent = msg.sender_id == currentUser;
+        const article = document.createElement("article");
+        article.className = isSent ? "message-sent" : "message-received";
+        article.innerHTML = `
+            <div class="message-text">${msg.text || msg.content}</div>
+            <div class="message-time">${formatTime(msg.date || msg.sent_at)}</div>
+        `;
+        messagesEl.appendChild(article);
+    });     
 }
 
-async function ensureConversation(currentUserIdParam) {
-    if (pageConversationId) return Number(pageConversationId);
-
-    const sellerId = pageSellerId;
-    if (!sellerId) {
-        // no throw: return null and let caller decide what to do
-        return null;
-    }
-
-    const response = await fetch("/conversations/check-or-create", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ user1: currentUserIdParam, user2: Number(sellerId) }),
-    });
-    const jsonData = await response.json().catch(() => null);
-    if (!response.ok) {
-        console.error("Error creating/obtaining conversation:", jsonData?.error || response.status);
-        return null;
-    }
-    return jsonData.conversationId;
-}
-
-async function createOrGetConversationForSeller(sellerId) {
-    if (!currentUserId) throw new Error("Session user missing");
-    try {
-        const response = await fetch("/conversations/check-or-create", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            credentials: "include",
-            body: JSON.stringify({ user1: currentUserId, user2: Number(sellerId) }),
-        });
-        const jsonData = await response.json().catch(() => null);
-        if (!response.ok) {
-            console.error(
-                "createOrGetConversationForSeller failed:",
-                jsonData?.error || response.status,
-            );
-            return null;
-        }
-        return jsonData.conversationId;
-    } catch (err) {
-        console.error("Network error:", err);
-        return null;
-    }
-}
-
-/* ===== Conversation / messages control ===== */
-
-// loadMessages(): uses the current Conversation object to fetch messages and render them.
-async function loadMessages() {
+// This function will be called when the user sends a message
+async function sendMsg(text) {
     if (!currentConversation) {
-        console.warn("No conversation selected, nothing to load.");
+        console.log("There is no conversation selected");
         return;
     }
-    try {
-        await currentConversation.getMessages();
-        currentConversation.renderMessages(messagesListEl);
-        scrollToBottom();
-        console.log("Messages loaded:", currentConversation.messages.length);
-    } catch (err) {
-        console.error("Error loading messages:", err.message || err);
+    const res = await fetch(`/conversations/${currentConversation.id}/messages`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ text })
+    });
+    if (res.ok) {
+        // Recarga los mensajes
+        await selectConversation(currentConversation.id);
     }
 }
 
-// switchConversationById(conversationId):
-async function switchConversationById(conversationId) {
-    if (!conversationId) return;
-    currentConversation = new Conversation(conversationId, currentUserId);
-    await loadMessages();
-    await loadConversationsList();
-    setActiveConversationButton(conversationId);
-}
-
-// switchConversationBySellerId(sellerId):
-async function switchConversationBySellerId(sellerId) {
-    const conversationId = await createOrGetConversationForSeller(sellerId);
-    if (!conversationId) {
-        alert("Could not create/get the conversation with that user.");
-        return;
-    }
-    await switchConversationById(conversationId);
-}
-
-/* ===== UI render helpers ===== */
-
-async function loadConversationsList() {
-    try {
-        const res = await fetch("/conversations", { credentials: "include" });
-        if (!res.ok) return console.error("Failed to load conversations");
-        const rows = await res.json();
-        const listEl =
-            document.getElementById("conversationsList") ||
-            document.querySelector(".chat-sidebar .conversations");
-        if (!listEl) return;
-        listEl.innerHTML = "";
-
-        if (rows.length === 0) {
-            listEl.innerHTML = '<div class="text-muted small">No conversations yet</div>';
-            return;
-        }
-
-        rows.forEach((c) => {
-            const btn = document.createElement("button");
-            btn.className = "chat-user btn btn-light text-start";
-            btn.dataset.conversationId = c.id;
-            btn.dataset.sellerId = c.other_user_id;
-
-            const inner = document.createElement("div");
-            inner.className = "d-flex align-items-center gap-3";
-
-            const avatar = document.createElement("div");
-            avatar.className =
-                "user-avatar rounded-circle d-flex align-items-center justify-content-center";
-            avatar.textContent = (c.other_username || "U").charAt(0).toUpperCase();
-
-            const content = document.createElement("div");
-            content.className = "flex-grow-1";
-            const title = document.createElement("div");
-            title.className = "fw-semibold";
-            title.textContent = c.other_username || "User";
-            const subtitle = document.createElement("div");
-            subtitle.className = "small text-muted";
-            subtitle.textContent = c.last_message || "";
-
-            content.appendChild(title);
-            content.appendChild(subtitle);
-            inner.appendChild(avatar);
-            inner.appendChild(content);
-            btn.appendChild(inner);
-
-            listEl.appendChild(btn);
-        });
-    } catch (err) {
-        console.error(err);
+// Search for the conversation with the given id in the conversations array
+async function selectConversation(id) {
+    const found = conversations.find(conv => conv.id == id);
+    if (found) {
+        currentConversation = found;
+        // Load messages for the selected conversation from the backend
+        const res = await fetch(`/conversations/${id}/messages`, { credentials: 'include' });
+        const data = await res.json();
+        currentConversation.messages = data.messages.map(msg => new Message(msg));
+        showMsg();
+    } else {
+        console.log("No conversation found with that id");
     }
 }
+// Shows the list of available conversations with their id and users
+function showConversationsList() {
+    const listEl = document.getElementById("conversationsList");
+    if (!listEl) return;
+    listEl.innerHTML = "";
+    conversations.forEach(conversation => {
+        const btn = document.createElement("button");
+        btn.className = "btn btn-outline-secondary w-100 text-start";
+        btn.textContent = `Conversación #${conversation.id} (${conversation.users.join(", ")})`;
+        btn.onclick = () => selectConversation(conversation.id);
+        listEl.appendChild(btn);
+    });
+}
 
-// init(): main initialization sequence executed once on page load.
-async function init() {
-    try {
-        if (!messagesListEl || !chatFormEl || !chatInputEl || !chatCardEl) {
-            console.warn("Chat elements are missing from the page.");
-            return;
-        }
+// This function will be called when the user changes, it will set the current user to the new user
+function changeUser(newUser) {
+    currentUser = newUser;
+    console.log(`Current user changed to: ${currentUser}`);
+}
 
-        // Confirm session in this browser (important — curl/test sessions are separate)
-        const session = await checkSession();
-        if (!session.loggedIn) {
-            // Not logged in: disable chat input and tell the user. The user must login in the browser.
-            console.log("You are not logged in the browser. Please login and reload the page.");
-            chatInputEl.disabled = true;
-            chatFormEl.querySelector("button[type=submit]")?.setAttribute("disabled", "true");
-            return;
-        }
-        // Save the authenticated user id for message rendering and sending.
-        currentUserId = session.userId;
-        await loadConversationsList(); // Load the conversation list in the sidebar after confirming session.
+// Get the current user from the backend when the page loads
+async function getCurrentUser() {
+    const res = await fetch('/check-session', { credentials: 'include' });
+    const data = await res.json();
+    currentUser = data.userId;
+}
 
-        // Instead of attaching individual listeners, we can use event delegation on the container:
-        // This is more efficient and also works for dynamically added conversation buttons.
-        const conversationsContainer =
-            document.getElementById("conversationsList") ||
-            document.querySelector(".chat-sidebar .conversations");
 
-        conversationsContainer?.addEventListener("click", async (e) => {
-            const btn = e.target.closest(".chat-user");
-            if (!btn) return;
-            const { conversationId, sellerId } = btn.dataset;
-            if (conversationId) {
-                await switchConversationById(Number(conversationId));
-            } else if (sellerId) {
-                await switchConversationBySellerId(Number(sellerId));
-            } else {
-                alert(
-                    "This element has no information to load the conversation. Open the chat from the post page.",
-                );
-            }
-        });
-
-        // Try to open a conversation if the page provided sellerId or conversationId.
-        let conversationId = await ensureConversation(currentUserId);
-
-        if (!conversationId) {
-            // No conversation selected: disable input and instruct the user to choose one.
-            console.log(
-                "No conversation preselected. Click a conversation on the left or open this chat from a post.",
-            );
-            chatInputEl.disabled = true;
-            chatFormEl.querySelector("button[type=submit]")?.setAttribute("disabled", "true");
-        } else {
-            // We have a conversation ID — enable input and load messages for it.
-            chatInputEl.disabled = false;
-            chatFormEl.querySelector("button[type=submit]")?.removeAttribute("disabled");
-            await switchConversationById(conversationId);
-        }
-
-        // Submit handler for sending a message:
-        chatFormEl.addEventListener("submit", async (e) => {
-            e.preventDefault();
-            if (!currentConversation) {
-                alert("Select a conversation before sending a message.");
-                return;
-            }
-            const messageText = chatInputEl.value.trim();
-            if (!messageText) return;
-            try {
-                chatInputEl.disabled = true;
-                await currentConversation.sendMessage(messageText);
-                chatInputEl.value = "";
-                await loadMessages();
-                await loadConversationsList();
-                setActiveConversationButton(currentConversation.id);
-            } catch (err) {
-                console.error("Error sending message:", err);
-                alert(err.message || "Error sending message. Try again.");
-            } finally {
-                chatInputEl.disabled = false;
-            }
-        });
-
-        // Polling: start a setInterval that calls `loadMessages` every POLL_INTERVAL_MS.
-        // A small helper `startPolling` clears previous intervals before starting.
-        if (pollIntervalId) clearInterval(pollIntervalId);
-        const startPolling = () => {
-            if (pollIntervalId) clearInterval(pollIntervalId);
-            pollIntervalId = setInterval(loadMessages, POLL_INTERVAL_MS);
-        };
-
-        startPolling();
-
-        // Visibility-awareness:
-        document.addEventListener("visibilitychange", () => {
-            if (document.visibilityState === "visible") {
-                loadMessages(); // refresh immediately
-                startPolling();
-            } else {
-                if (pollIntervalId) clearInterval(pollIntervalId);
-            }
-        });
-
-        // Clear polling on page unload to avoid timers lingering.
-        window.addEventListener("beforeunload", () => {
-            if (pollIntervalId) clearInterval(pollIntervalId);
-        });
-    } catch (err) {
-        // Top-level init errors are logged — do not rethrow so the page remains usable.
-        console.error("Init chat error:", err);
+// Event listeners
+document.getElementById("chatFormEl").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const input = document.getElementById("chatInputEl");
+    const text = input.value.trim();
+    if (text) {
+        await sendMsg(text);
+        input.value = "";
     }
-}
-if (window.__sunnifyChatInit) {
-    console.log("Chat script already initialized, skipping duplicate init.");
-} else {
-    window.__sunnifyChatInit = true;
-    init();
-}
+});
+
+(async function initChat() {
+    await getCurrentUser();
+    await loadConversations();
+})();
+
+loadConversations();
