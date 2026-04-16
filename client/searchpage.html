@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Search — Sunnify</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="../css/main.css">
+    <link rel="stylesheet" href="../css/search.css">
+</head>
+<body>
+    <div id="header-container"></div>
+
+    <main class="search-page-example py-4 ">
+        <div class="container">
+            <div class="search-bar">
+                <form class="d-flex gap-2 align-items-center">
+                    <input class="form-control" type="text" placeholder="Search items, keywords..." aria-label="Search">
+                    <button class="btn btn-primary">Go</button>
+                </form>
+            </div>
+
+            <div class="row g-4">
+                <!-- mobile filter toggle -->
+                <div class="col-12 d-lg-none">
+                    <button class="btn btn-outline-secondary btn-sm w-100" type="button"
+                            data-bs-toggle="collapse" data-bs-target="#filtersCollapse" aria-expanded="false"
+                            aria-controls="filtersCollapse">
+                        Show filters
+                    </button>
+                </div>
+
+                <aside class="col-12 col-lg-3">
+                    <!-- collapse so it hides on mobile and stays visible on lg+ -->
+                    <div class="collapse d-lg-block" id="filtersCollapse">
+                        <div class="card p-3 filters-card">
+                            <h6 class="mb-3">Filters</h6>
+
+                            <label class="form-label small">Price</label>
+                            <div id="price-filter-container" class="price-range mb-3">
+                                <div class="price-values d-flex justify-content-between small text-muted mb-2">
+                                    <span>Min: <span id="price-min-label">0</span> EUR</span>
+                                    <span>Max: <span id="price-max-label">1000</span> EUR</span>
+                                </div>
+
+                                <div class="range-slider">
+                                    <div class="slider-track"></div>
+                                    <div id="slider-range-fill" class="slider-range"></div>
+
+                                    <input type="range" id="price-min" name="price_min" min="0" max="1000" step="20" value="0" class="range-input range-min" aria-label="Min" />
+                                    <input type="range" id="price-max" name="price_max" min="0" max="1000" step="20" value="1000" class="range-input range-max" aria-label="Max" />
+                                </div>
+                            </div>
+
+                            <label class="form-label small" for="location-input">Location</label>
+                            <div id="smart-location-dropdown-container" class="position-relative w-100 mb-3"></div>
+
+                            <label class="form-label small" for="category-input">Category</label>
+                            <div id="smart-category-dropdown-container" class="position-relative w-100 mb-3"></div>
+
+                            <label class="form-label small" for="condition-select">Condition</label>
+                            <div id="condition-dropdown-container" class="position-relative w-100 mb-3"></div>
+
+                            <div class="d-flex gap-2">
+                                <button id="apply-filters-btn" class="btn btn-primary btn-sm">Apply</button>
+                                <button id="reset-filters-btn" class="btn btn-outline-secondary btn-sm" type="button">Reset</button>
+                            </div>
+                        </div>
+                    </div>
+                </aside>
+
+                <div id="results-area" class="col-12 col-lg-9">
+                    <div id="results-header" class="d-flex align-items-center justify-content-between mb-3">
+                        <div class="text-muted small" id="resultsCount">0 results</div>
+
+                        <!-- result count + sort -->
+                        <div class="ms-auto d-flex align-items-center gap-2">
+                            <label for="sort-select" class="visually-hidden">Sort</label>
+                            <div class="dropdown">
+                                <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button"
+                                        id="sortDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                    Most relevant
+                                </button>
+                                <ul class="dropdown-menu" aria-labelledby="sortDropdown">
+                                    <li><a class="dropdown-item active" href="#" data-value="relevance">Most Relevant</a></li>
+                                    <li><a class="dropdown-item" href="#" data-value="newest">Newest</a></li>
+                                    <li><a class="dropdown-item" href="#" data-value="oldest">Oldest</a></li>
+                                    <li><a class="dropdown-item" href="#" data-value="price-asc">Lowest Price</a></li>
+                                    <li><a class="dropdown-item" href="#" data-value="price-desc">Highest Price</a></li>
+                                </ul>
+                            </div>
+                        </div>
+
+                    </div>
+                    <div class="row g-4 results-row" id="resultsGrid">
+                        
+                    </div>
+
+                    <div class="text-center mt-4 load-more-row">
+                        <button class="btn btn-secondary" id="loadMoreBtn">Load more</button>
+                    </div>
+
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <div id="footer-container"></div>
+
+    <script type="module" src="../Reusable-HTML/components/headerLoader.js"></script>
+    <script type="module" src="../Reusable-HTML/components/footerLoader.js"></script>
+    <script type="module" src="../Reusable-HTML/components/carouselLoader.js"></script>
+    <script type="module" src="../Reusable-HTML/components/smartLocationDropdown.js"></script>
+    <script type="module" src="../Reusable-HTML/components/smartCategoryDropdown.js"></script>
+    <script type="module" src="../Reusable-HTML/components/conditionDropdown.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+    <script type="module" src="../js/searchpage.js"></script>
+
+</body>
+</html>
