@@ -138,6 +138,3 @@ dist
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 /.vs
-
-# AI generated files
-AI-*

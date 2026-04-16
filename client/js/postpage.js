@@ -1,6 +1,5 @@
 // client/js/postpage.js
 // Page script that loads a single post by id and renders its details into the DOM.
-// This copy adds explanatory comments in English but does not change any of the original code.
 
 (() => {
     // Backend base URL used for post requests.
@@ -57,20 +56,16 @@
         // Update the browser tab title to include the post title when available.
         document.title = post.title ? `${post.title} | Sunnify` : "Post | Sunnify";
 
-        // (Original Spanish developer note left in place)
-        // no hablar espanol mi amigo anas.
-        
         // The API now returns the seller's username; display it or fall back to "Seller".
         setText("seller-name", post.seller_username || "Seller");
 
         // Add behavior to the "Contact seller" button: redirect to the chat page
-        // and include the `sellerId` in the query string so the chat can open/create
-        // the appropriate conversation.
+        // and include the `sellerId` in the query string so the chat can open/create the appropriate conversation.
         const contactBtn = document.querySelector(".post-details-card .btn.btn-primary");
         if (contactBtn) {
             contactBtn.addEventListener("click", () => {
                 // Redirect to the example chat page with sellerId query param.
-                window.location.href = `/page-examples/chatpage-example.html?sellerId=${post.seller_id}`;
+                window.location.href = `/page-examples/chatpage-example.html?sellerId=${post.seller_id}&postId=${post.id}`;
             });
         }
     };
@@ -133,7 +128,6 @@
         if (!value) {
             return "";
         }
-
         return value.charAt(0).toUpperCase() + value.slice(1);
     };
 })();
