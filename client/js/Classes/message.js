@@ -4,6 +4,7 @@
 // Create a class to have the structure of what the message will be like
 class Message {
 
+    // I use {} destructuring to make it easier to create a message object without worrying about the order of the parameters
     constructor({ id, content, sent_at, sender_id, receiver_id, conversation_id }) {
         this.id = id;
         this.content = content;

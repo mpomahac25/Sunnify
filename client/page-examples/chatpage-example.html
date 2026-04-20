@@ -79,6 +79,11 @@
                                     </div>
 
                                     <div id="conversationsList" class="d-grid gap-3"></div>
+
+                                    <button id="deleteConversationsBtn" class="btn btn-danger d-none mt-3 w-100">
+                                        Delete Conversations (<span id="deleteCount">0</span>)
+                                    </button>                                    
+
                                 </div>
                             </div>
                         </aside>
@@ -86,32 +91,6 @@
                         <div class="col-12 col-lg-8">
                             <div class="card border-0 shadow-sm chat-main-card">
                                 <div class="chat-header border-bottom p-3">
-                                    <div class="row align-items-start g-3">
-                                        <div class="col-3 d-flex align-items-center gap-3">
-                                            <div
-                                                class="avatar rounded-circle d-flex align-items-center justify-content-center"
-                                                id="chatAvatar"
-                                            >
-                                                H
-                                            </div>
-                                            <div>
-                                                <h2 class="fs-6 fs-md-5 mb-1" id="chatUserName">
-                                                    Hasbulla
-                                                </h2>
-                                            </div>
-                                        </div>
-
-                                        <div
-                                            class="col-9 d-flex justify-content-end align-items-start"
-                                        >
-                                            <a
-                                                href="/examples/post"
-                                                class="btn btn-outline-secondary btn-sm fs-8 px-2 py-1"
-                                            >
-                                                Back
-                                            </a>
-                                        </div>
-                                    </div>
 
                                     <div class="img-container card">
                                         <div class="carousel-container"></div>
@@ -134,22 +113,7 @@
                                     </div>
                                 </div>
 
-                                <div class="messages p-4" id="messagesListEl">
-                                    <article class="message-received">
-                                        <div class="message-text"></div>
-                                        <div class="message-time"></div>
-                                    </article>
-
-                                    <article class="message-sent">
-                                        <div class="message-text"></div>
-                                        <div class="message-time"></div>
-                                    </article>
-
-                                    <article class="message-received">
-                                        <div class="message-text"></div>
-                                        <div class="message-time"></div>
-                                    </article>
-                                </div>
+                                <div class="messages p-2" id="messagesListEl"></div>
 
                                 <div class="chat-input border-top p-4">
                                     <form class="d-flex gap-2 w-100" id="chatFormEl">

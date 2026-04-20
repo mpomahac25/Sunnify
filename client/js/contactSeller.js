@@ -9,8 +9,10 @@ async function getCurrentUserId() {
 
 // Get the seller id
 const contactBtn = document.getElementById("contactSellerBtn");
-const sellerId = contactBtn?.getAttribute("data-seller-id");
+
+// If expression before ? is null, then the parts after ? aren't executed and null is returned as the result of the whole expression
 const postId = contactBtn.getAttribute("data-post-id");
+const sellerId = contactBtn?.getAttribute("data-seller-id"); 
 
 contactBtn?.addEventListener("click", async () => {
     const currentUserId = await getCurrentUserId();
@@ -22,8 +24,9 @@ contactBtn?.addEventListener("click", async () => {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ user1: currentUserId, user2: Number(sellerId) }),
+        body: JSON.stringify({ user1: currentUserId, user2: Number(sellerId), postId: Number(postId) }),
     });
+    
     const data = await res.json();
     if (res.ok) {
         window.location.href = `/page-examples/chatpage-example.html?conversationId=${data.conversationId}&postId=${postId}`;

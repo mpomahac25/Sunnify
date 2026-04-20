@@ -620,17 +620,27 @@ sunnifyRouter.post("/search-results", async (req, res) => {
     }
 });
 
-// DELETE /users/:id
-// Placeholder: no implementation provided.
-sunnifyRouter.delete("/users/:id", isUserAuthenticated, async (req, res) => {});
+// Start of Chat System: Conversations & Messages
 
+// Get all conversations where the user is participating
+sunnifyRouter.get("/conversations", isUserAuthenticated, async (req, res) => {
+    try{
+    const sessionUser = req.session.userId;
+    
+    // Search for all the conversations where the user is participating 
+    const result = await query (
+        `SELECT * FROM conversations
+            WHERE user1_id = $1 OR user2_id = $1
+            ORDER BY id DESC`,
+            [sessionUser]
+    );
 
-
-/*
-// Some commented-out example routes are present below in the original file.
-*/
-
-// Chat System: Conversations & Messages
+    // Return the array of conversations with status 200 (OK)
+    return res.status(200).json({ conversations: result.rows });
+    } catch(error){
+        errorResponse(res, error);
+    }
+});
 
 // Create a conversation between 2 users if it does not exist, or return the id if it already exists
 sunnifyRouter.post("/conversation/check-or-create", isUserAuthenticated, async (req, res) => {
@@ -638,11 +648,13 @@ sunnifyRouter.post("/conversation/check-or-create", isUserAuthenticated, async (
         // Make the received ids into a number
         const user1 = Number(req.body.user1);
         const user2 = Number(req.body.user2);
+        const postId = Number(req.body.postId);
+
         // User id authenticated (logged one)
         const sessionUser = req.session.userId;
 
         // Basic validation, numbers must be valid
-        if (Number.isNaN(user1) || Number.isNaN(user1)) {
+        if (Number.isNaN(user1) || Number.isNaN(user2)) {
             return res.status(400).json({ error: "Invalid user ids" });
         }
 
@@ -654,9 +666,10 @@ sunnifyRouter.post("/conversation/check-or-create", isUserAuthenticated, async (
         // Check if the conversation already exists between 2 users (in whatever order)
         const result = await query(
             `SELECT id FROM conversations
-                WHERE (user1_id = $1 AND user2_id = $2) or (user1_id = $2 AND user2_id = $1)
+                WHERE ((user1_id = $1 AND user2_id = $2) OR (user1_id = $2 AND user2_id = $1))
+                AND post_id = $3
                 LIMIT 1`,
-            [user1, user2],
+            [user1, user2, postId],
         );
 
         // If it exists, return the existing id
@@ -666,9 +679,10 @@ sunnifyRouter.post("/conversation/check-or-create", isUserAuthenticated, async (
 
         // If it doesn't exist, create the conversation and return the new id
         const insertResult = await query(
-            `INSERT INTO conversations (user1_id, user2_id) VALUES ($1, $2) RETURNING id`,
-            [user1, user2]
+            `INSERT INTO conversations (user1_id, user2_id, post_id) VALUES ($1, $2, $3) RETURNING id`,
+            [user1, user2, postId]
         );
+
         return res.status(201).json({ conversationId: insertResult.rows[0].id });
     } catch (error) {
         errorResponse(res, error);
@@ -719,7 +733,6 @@ sunnifyRouter.get("/conversations/:id/messages", isUserAuthenticated, async (req
 });
 
 // Send a message in a conversation, only if the logged user is part of the conversation (user1 or user2)
-// The route /conversations/:id/messages returns the interted message and all its data
 sunnifyRouter.post("/conversations/:id/messages", isUserAuthenticated, async (req, res) => {
     try{
         const conversationID = Number(req.params.id);
@@ -773,22 +786,29 @@ sunnifyRouter.post("/conversations/:id/messages", isUserAuthenticated, async (re
     }
 });
 
-sunnifyRouter.get("/conversations", isUserAuthenticated, async (req, res) => {
-    try{
-    const sessionUser = req.session.userId;
-    
-    // Search for all the conversations where the user is participating 
-    const result = await query (
-        `SELECT * FROM conversations
-            WHERE user1_id = $1 OR user2_id = $1
-            ORDER BY id DESC`,
-            [sessionUser]
-    );
-
-    // Return the array of conversations with status 200 (OK)
-    return res.status(200).json({ conversations: result.rows });
-    } catch(error){
-        errorResponse(res, error);
+// Delete conversations that belong to the authenticated user
+sunnifyRouter.delete("/conversations", isUserAuthenticated, async (req, res) => {
+    try {
+        const { conversationIds } = req.body;
+        const userId = req.session.userId;
+        if (!Array.isArray(conversationIds) || conversationIds.length === 0) {
+            return res.status(400).json({ error: "No conversations selected" });
+        }
+        
+        if (!conversationIds.every(id => Number.isInteger(id) && id > 0)) {
+            return res.status(400).json({ error: "Invalid conversation IDs" });
+        }
+        // Delete only conversations where the user is a participant
+        const result = await query(
+            `DELETE FROM conversations
+                WHERE id = ANY($1)
+                AND (user1_id = $2 OR user2_id = $2)
+                RETURNING id`,
+            [conversationIds, userId]
+        );
+        res.status(200).json({ message: "Conversations deleted", deleted: result.rows.length });
+    } catch (error) {
+        res.status(500).json({ error: "Error deleting conversations" });
     }
 });
 
