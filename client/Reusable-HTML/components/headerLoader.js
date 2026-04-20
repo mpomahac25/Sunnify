@@ -61,7 +61,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
                     //alert("Logout successful!");
 
-                    window.location.href = "main.html";
+                    window.location.href = "/main.html";
                 } catch (error) {
                     alert("Unknown error occured!");
                     console.log(`Network error: ${error}`);
