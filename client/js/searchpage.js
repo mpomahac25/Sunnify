@@ -5,8 +5,11 @@ import { createPostCard } from "../Reusable-HTML/components/postCard.js";
 
 // Const config vars
 const PRICE_GROUPS = [
-    10, 25, 50, 100, 250, 500, 1000, 2500, 5000,
-    10000, 25000, 50000, 100000, 250000, 500000, 1000000
+    10, 20, 30, 40, 50, 60, 70, 80, 90,
+    100, 200, 300, 400, 500, 600, 700, 800, 900,
+    1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000,
+    10000, 20000, 30000, 40000, 50000, 60000, 70000, 80000, 90000,
+    100000, 200000, 300000, 400000, 500000, 600000, 700000, 800000, 900000, 1000000
 ];
 const PRICE_SLIDER_STEPS = 100;
 
@@ -551,6 +554,8 @@ document.addEventListener("DOMContentLoaded", async () => {
         filteredResultsWithoutPrice = allResults;
         refreshPriceSliderFromCandidateResults(filteredResultsWithoutPrice, false);
         updateSearchObjectFilters();
+
+        lastNonPriceFilterKey = buildNonPriceFilterKey();
 
         const finalResults = applyPriceFiltering(filteredResultsWithoutPrice);
         renderResults(finalResults);

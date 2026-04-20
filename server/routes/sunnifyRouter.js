@@ -558,6 +558,17 @@ sunnifyRouter.post("/search-results", async (req, res) => {
         checkAndAddParam("posts.price", ">=", searchObject.filters.priceMin);
         checkAndAddParam("posts.price", "<=", searchObject.filters.priceMax);
 
+        // Title and description loose SQL filtering -> only 1 search token needs to match a word in title or description
+        searchObject.searchTermsTokens.forEach(token => {
+            const likeToken = `%${token}%`;
+            filterConditions.push(`
+                (
+                    posts.title ILIKE ${addParam(likeToken)} 
+                    OR posts.description ILIKE ${addParam(likeToken)}
+                )
+            `);
+        });
+
         // Build SQL clauses
         const selectClause = `
             SELECT
@@ -610,10 +621,13 @@ sunnifyRouter.post("/search-results", async (req, res) => {
         const result = await query(sql, queryParams);
         const posts = result.rows;
 
+        // Filter (and optionally sort) by relevancy
+        const filteredPosts = filterAndSortPostsByRelevancy(posts, searchObject);
+
         return res.status(200).json({
             searchObject,
-            posts,
-            totalCount: posts.length
+            posts: filteredPosts,
+            totalCount: filteredPosts.length
         });
     } catch (error) {
         errorResponse(res, error);
@@ -817,7 +831,8 @@ const tokenizeSearchText = (normalizedText) => {
         return [];
     }
 
-    return [...new Set(normalizedText.split(" ").filter(Boolean))];
+    // Split into array of unique search terms, minimum 2 character length
+    return [...new Set(normalizedText.split(" ").filter(Boolean).filter(term => term.length >= 2))];
 };
 
 const normalizeInteger = (value) => {
@@ -866,6 +881,93 @@ const buildSearchObject = (rawRequest = {}) => {
             priceMax: normalizeNumber(rawRequest.filters?.priceMax)
         }
     };
+};
+
+const filterAndSortPostsByRelevancy = (postsFromDb, searchObject) => {
+    if (!Array.isArray(postsFromDb)) return [];
+
+    const doSorting = searchObject.sortType === "relevancy";
+    const rawSearch = searchObject.searchTermsNormalized || "";
+    const tokens = Array.isArray(searchObject.searchTermsTokens)
+        ? searchObject.searchTermsTokens
+        : [];
+
+    // No tokens means no valid search terms; just return original array
+    if (tokens.length === 0) {
+        return postsFromDb;
+    }
+
+    // Create array of post objects with relevancy score
+    const scoredPosts = postsFromDb
+        .map(post => {
+            const title = normalizeSearchText(post.title);
+            const description = normalizeSearchText(post.description);
+
+            let score = 0;
+            let matchedTokenCount = 0;
+
+            // Full exact match with user input
+            if (rawSearch !== "") {
+                if (title.includes(rawSearch)) score += 100;
+                if (description.includes(rawSearch)) score += 40;
+            }
+
+            // Token matching
+            tokens.forEach(token => {
+                let tokenMatched = false;
+
+                if (title.includes(token)) {
+                    score += 20;
+                    tokenMatched = true;
+                }
+
+                if (description.includes(token)) {
+                    score += 8;
+                    tokenMatched = true;
+                }
+
+                if (tokenMatched) {
+                    matchedTokenCount++;
+                }
+            });
+
+            // Bonus if all search tokens matched
+            if (matchedTokenCount === tokens.length) {
+                score += 30;
+            }
+
+            // Bonus if title starts with user input
+            if (rawSearch !== "" && title.startsWith(rawSearch)) {
+                score += 25;
+            }
+
+            return {
+                ...post,
+                relevanceScore: score,
+                matchedTokenCount
+            };
+        })
+        .filter(post => post.relevanceScore > 0);
+
+    // Sorting not requested, return just filtered
+    if (!doSorting) {
+        return scoredPosts;
+    }
+
+    return scoredPosts.sort((a, b) => {
+        // Relevancy score sorting
+        if (b.relevanceScore !== a.relevanceScore) {
+            return b.relevanceScore - a.relevanceScore;
+        }
+
+        // If relevancy score equal, sort by number of matched search tokens
+        if (b.matchedTokenCount !== a.matchedTokenCount) {
+            return b.matchedTokenCount - a.matchedTokenCount;
+        }
+
+        // If relevancy score and number of matched search tokens are equal, sort by date posts were created
+        return new Date(b.created_at) - new Date(a.created_at);
+    });
 };
 
 module.exports = { sunnifyRouter };
