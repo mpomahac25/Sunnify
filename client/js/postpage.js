@@ -1,10 +1,4 @@
-// client/js/postpage.js
-// Page script that loads a single post by id and renders its details into the DOM.
-
 (() => {
-    // Backend base URL used for post requests.
-    const POST_BACKEND_ROOT_URL = "http://127.0.0.1:3000" || "http://localhost:3000";
-
     // Run code once the DOM is ready.
     document.addEventListener("DOMContentLoaded", async () => {
         // Read the `id` query parameter from the page URL.
@@ -20,7 +14,7 @@
 
         try {
             // Fetch the post data from the backend for the requested id.
-            const response = await fetch(`${POST_BACKEND_ROOT_URL}/posts/${postId}`, {
+            const response = await fetch(`/posts/${postId}`, {
                 method: "get",
             });
 

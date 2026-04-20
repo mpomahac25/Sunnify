@@ -1,7 +1,5 @@
 import { Locations } from "../../js/Classes/locations.js";
 
-const BACKEND_ROOT_URL = "http://127.0.0.1:3000";
-
 let locationInputField;
 let locationDropdown;
 
@@ -49,7 +47,7 @@ const cityEntriesMap = new Map();
 const regionsOfCountryMap = new Map();
 const citiesOfRegionMap = new Map();
 
-const locations = new Locations(BACKEND_ROOT_URL);
+const locations = new Locations();
 
 locations.getLocations()
     .then(() => {

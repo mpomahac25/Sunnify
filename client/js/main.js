@@ -1,8 +1,6 @@
 import { createPostCard } from "../Reusable-HTML/components/postCard.js";
 import { getSelectedLocation, getTypedLocationValue, markLocationInvalid, clearLocationInvalid } from "../Reusable-HTML/components/smartLocationDropdown.js";
 
-const BACKEND_ROOT_URL = "http://127.0.0.1:3000";
-
 const searchForm = document.getElementById("search-form");
 const searchTermsField = document.getElementById("search-terms");
 
@@ -24,7 +22,7 @@ searchForm.addEventListener("submit", async (event) => {
     const searchLocationId = selectedLocation ? selectedLocation.id : "";
     const searchLocationType = selectedLocation ? selectedLocation.type : "";
 
-    window.location.href = `${BACKEND_ROOT_URL}/search?` +
+    window.location.href = `/search?` +
         `terms=${encodeURIComponent(searchTerms)}&` +
         `location=${encodeURIComponent(searchLocation)}&` +
         `type=${encodeURIComponent(searchLocationType)}&` +
@@ -40,7 +38,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     try {
-        const response = await fetch(`${BACKEND_ROOT_URL}/posts`, {
+        const response = await fetch(`/posts`, {
             method: "get"
         });
 

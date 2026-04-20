@@ -2,11 +2,9 @@ import { usernameValidators } from "./validation/username.js";
 import { passwordValidators } from "./validation/password.js";
 import { emailValidators } from "./validation/email.js";
 
-const BACKEND_ROOT_URL = "http://127.0.0.1:3000";
-
 document.addEventListener("DOMContentLoaded", async () => {
     try {
-        const response = await fetch(`${BACKEND_ROOT_URL}/check-session`, {
+        const response = await fetch(`/check-session`, {
             method: "get",
             credentials: "include"
         });
@@ -66,7 +64,7 @@ form.addEventListener("submit", async (event) => {
     try {
         const json = JSON.stringify({ username: username, email: email, password: password });
 
-        const response = await fetch(`${BACKEND_ROOT_URL}/register`, {
+        const response = await fetch(`/register`, {
             method: "post",
             headers: {
                 "Content-Type": "application/json"

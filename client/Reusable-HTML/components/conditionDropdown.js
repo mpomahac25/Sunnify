@@ -1,5 +1,3 @@
-const BACKEND_ROOT_URL = "http://127.0.0.1:3000";
-
 let conditionDropdown;
 
 document.addEventListener("DOMContentLoaded", async () => {
@@ -27,7 +25,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 });
 
 const fetchConditions = async () => {
-    const response = await fetch(`${BACKEND_ROOT_URL}/post-conditions`, {
+    const response = await fetch(`/post-conditions`, {
         method: "GET"
     });
 
@@ -42,13 +40,13 @@ const setConditionDropdownValues = (conditions) => {
     if (!conditionDropdown) return;
 
     // No filter
-    conditionDropdown.innerHTML = '<option value="">Any</option>';
+    conditionDropdown.innerHTML = '<option value="">Choose condition</option>';
 
     if (!Array.isArray(conditions)) return;
 
     conditions.forEach(condition => {
         const option = document.createElement("option");
-        option.value = String(condition.id);
+        option.value = condition.condition;
         option.textContent = condition.condition;
         conditionDropdown.appendChild(option);
     });
@@ -59,5 +57,27 @@ export const getSelectedCondition = () => {
 };
 
 export const clearSelectedCondition = () => {
-    if (conditionDropdown) conditionDropdown.value = "";
+    if (conditionDropdown) {
+        conditionDropdown.value = "";
+        conditionDropdown.classList.remove("is-invalid");
+    }
+};
+
+export const setSelectedCondition = (value) => {
+    if (conditionDropdown) {
+        conditionDropdown.value = value ?? "";
+        clearConditionInvalid();
+    }
+};
+
+export const markConditionInvalid = () => {
+    if (conditionDropdown) {
+        conditionDropdown.classList.add("is-invalid");
+    }
+};
+
+export const clearConditionInvalid = () => {
+    if (conditionDropdown) {
+        conditionDropdown.classList.remove("is-invalid");
+    }
 };

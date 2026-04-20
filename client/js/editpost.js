@@ -1,8 +1,8 @@
-import { getSelectedLocation, getTypedLocationValue, markLocationInvalid, clearLocationInvalid, setTypedLocationValue } from "../Reusable-HTML/components/smartLocationDropdown.js";
+import { getSelectedLocation, getTypedLocationValue, markLocationInvalid, clearLocationInvalid, setTypedLocationValue } from "/Reusable-HTML/components/smartLocationDropdown.js";
+import { getSelectedCondition, setSelectedCondition, clearSelectedCondition, markConditionInvalid, clearConditionInvalid } from "/Reusable-HTML/components/conditionDropdown.js";
+import { getSelectedCategory, setSelectedCategoryByName, clearSelectedCategory, markCategoryInvalid, clearCategoryInvalid } from "/Reusable-HTML/components/smartCategoryDropdown.js";
 
 (() => {
-    const EDIT_POST_BACKEND_URL = "http://127.0.0.1:3000"
-
     document.addEventListener("DOMContentLoaded", async () => {
         const params = new URLSearchParams(window.location.search);
         const postId = parseInt(params.get("id"));
@@ -14,7 +14,7 @@ import { getSelectedLocation, getTypedLocationValue, markLocationInvalid, clearL
         }
 
         try {
-            const response = await fetch(`${EDIT_POST_BACKEND_URL}/posts/${postId}`, {
+            const response = await fetch(`/posts/${postId}`, {
                 method: "get",
             });
 
@@ -29,8 +29,6 @@ import { getSelectedLocation, getTypedLocationValue, markLocationInvalid, clearL
             const titleField = document.getElementById("listing-title");
             const descriptionField = document.getElementById("listing-description");
             const priceField = document.getElementById("listing-price");
-            const conditionField = document.getElementById("listing-condition");
-            const categoryField = document.getElementById("listing-category");
             const cancelButton = document.querySelector('button[type="button"]');
 
             form.addEventListener("submit", async (event) => {
@@ -39,8 +37,9 @@ import { getSelectedLocation, getTypedLocationValue, markLocationInvalid, clearL
             const title = titleField.value.trim();
             const description = descriptionField.value.trim();
             const price = priceField.value.trim();
-            const condition = conditionField.value;
-            const category = categoryField.value;
+            const condition = getSelectedCondition();
+            const categoryObj = getSelectedCategory();
+            const category = categoryObj ? categoryObj.name : "";
 
             const selectedLocation = getSelectedLocation();
             const typedLocation = getTypedLocationValue();
@@ -73,7 +72,7 @@ import { getSelectedLocation, getTypedLocationValue, markLocationInvalid, clearL
             try {
                 console.log(payload)
 
-                const patchResponse = await fetch(`${EDIT_POST_BACKEND_URL}/posts/${postId}`,{
+                const patchResponse = await fetch(`/posts/${postId}`,{
                   method: "PATCH",
                   headers : {
                     "Content-Type" : "application/json"
@@ -123,9 +122,9 @@ import { getSelectedLocation, getTypedLocationValue, markLocationInvalid, clearL
         setValue("listing-title", post.title);
         setValue("listing-description", post.description);
         setValue("listing-price", post.price);
-        setValue("listing-condition", post.condition);
+        setSelectedCondition(post.condition);
         setTypedLocationValue(post.location);
-        setValue("listing-category", post.category);
+        setSelectedCategoryByName(post.category);
     };
 
     const validateEditForm = ({ title, description, price, condition, location, category }) => {
@@ -155,7 +154,7 @@ import { getSelectedLocation, getTypedLocationValue, markLocationInvalid, clearL
             return "Please choose a location.";
         }
 
-        if (!category || category === "Select category") {
+        if (!category) {
             return "Please choose a category.";
         }
 
