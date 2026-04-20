@@ -558,6 +558,17 @@ sunnifyRouter.post("/search-results", async (req, res) => {
         checkAndAddParam("posts.price", ">=", searchObject.filters.priceMin);
         checkAndAddParam("posts.price", "<=", searchObject.filters.priceMax);
 
+        // Title and description loose SQL filtering -> only 1 search token needs to match a word in title or description
+        searchObject.searchTermsTokens.forEach(token => {
+            const likeToken = `%${token}%`;
+            filterConditions.push(`
+                (
+                    posts.title ILIKE ${addParam(likeToken)} 
+                    OR posts.description ILIKE ${addParam(likeToken)}
+                )
+            `);
+        });
+
         // Build SQL clauses
         const selectClause = `
             SELECT
@@ -609,6 +620,9 @@ sunnifyRouter.post("/search-results", async (req, res) => {
         // Fetch data
         const result = await query(sql, queryParams);
         const posts = result.rows;
+
+        // Filter (and optionally sort) by relevancy
+
 
         return res.status(200).json({
             searchObject,
@@ -817,7 +831,8 @@ const tokenizeSearchText = (normalizedText) => {
         return [];
     }
 
-    return [...new Set(normalizedText.split(" ").filter(Boolean))];
+    // Split into array of unique search terms, minimum 2 character length
+    return [...new Set(normalizedText.split(" ").filter(Boolean).filter(term => term.length >= 2))];
 };
 
 const normalizeInteger = (value) => {
