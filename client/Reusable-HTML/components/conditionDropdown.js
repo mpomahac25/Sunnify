@@ -1,5 +1,3 @@
-const BACKEND_ROOT_URL = "http://127.0.0.1:3000";
-
 let conditionDropdown;
 
 document.addEventListener("DOMContentLoaded", async () => {
@@ -27,7 +25,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 });
 
 const fetchConditions = async () => {
-    const response = await fetch(`${BACKEND_ROOT_URL}/post-conditions`, {
+    const response = await fetch(`/post-conditions`, {
         method: "GET"
     });
 

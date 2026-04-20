@@ -1,7 +1,5 @@
 import { Categories } from "../../js/Classes/categories.js";
 
-const BACKEND_ROOT_URL = "http://127.0.0.1:3000";
-
 let categoryInputField;
 let categoryDropdown;
 
@@ -47,7 +45,7 @@ const subcategoryEntriesMap = new Map();
 
 const subcategoriesOfCategoryMap = new Map();
 
-const categories = new Categories(BACKEND_ROOT_URL);
+const categories = new Categories();
 
 categories.getAllCategories()
     .then(() => {

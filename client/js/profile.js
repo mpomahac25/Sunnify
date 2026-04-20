@@ -1,8 +1,6 @@
 import { createPostCard } from "../Reusable-HTML/components/postCard.js";
 
 (() => {
-    const PROFILE_BACKEND_ROOT_URL = "http://127.0.0.1:3000";
-
     let pendingDeletePostId = null;
 
     document.addEventListener("DOMContentLoaded", async () => {
@@ -28,7 +26,7 @@ import { createPostCard } from "../Reusable-HTML/components/postCard.js";
             }
 
             try {
-                const response = await fetch(`${PROFILE_BACKEND_ROOT_URL}/posts/${pendingDeletePostId}`, {
+                const response = await fetch(`/posts/${pendingDeletePostId}`, {
                     method: "delete",
                     credentials: "include"
                 });
@@ -50,7 +48,7 @@ import { createPostCard } from "../Reusable-HTML/components/postCard.js";
         });
 
         try {
-            const sessionResponse = await fetch(`${PROFILE_BACKEND_ROOT_URL}/check-session`, {
+            const sessionResponse = await fetch(`/check-session`, {
                 method: "get",
                 credentials: "include"
             });
@@ -60,7 +58,7 @@ import { createPostCard } from "../Reusable-HTML/components/postCard.js";
 
             isOwnProfile = sessionUserId === userId;
 
-            const profileResponse = await fetch(`${PROFILE_BACKEND_ROOT_URL}/users/${userId}`, {
+            const profileResponse = await fetch(`/users/${userId}`, {
                 method: "get"
             });
 
@@ -94,7 +92,7 @@ import { createPostCard } from "../Reusable-HTML/components/postCard.js";
     };
 
     const loadProfilePosts = async (userId, isOwnProfile) => {
-        const postsResponse = await fetch(`${PROFILE_BACKEND_ROOT_URL}/users/${userId}/posts`, {
+        const postsResponse = await fetch(`/users/${userId}/posts`, {
             method: "get"
         });
 

@@ -9,10 +9,10 @@ class Locations {
 
     #locations = new Map();
 
-    #backendUrl = "";
+    //#backendUrl = "";
 
-    constructor(url) {
-        this.#backendUrl = url;
+    constructor() {
+        //this.#backendUrl = url;
 
         this.#locations.set("Countries", this.#countries);
         this.#locations.set("Regions", this.#regions);
@@ -21,7 +21,7 @@ class Locations {
 
     getLocations = () => {
         return new Promise(async (resolve, reject) => {
-            fetch(`${this.#backendUrl}/locations`)
+            fetch(`/locations`)
                 .then((response) => response.json())
                 .then((json) => {
                     this.#readJson(json);

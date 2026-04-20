@@ -4,7 +4,6 @@ import { getSelectedCondition, clearSelectedCondition } from "../Reusable-HTML/c
 import { createPostCard } from "../Reusable-HTML/components/postCard.js";
 
 // Const config vars
-const BACKEND_ROOT_URL = "http://127.0.0.1:3000";
 const PRICE_GROUPS = [
     10, 25, 50, 100, 250, 500, 1000, 2500, 5000,
     10000, 25000, 50000, 100000, 250000, 500000, 1000000
@@ -127,7 +126,7 @@ const buildNonPriceFilterKey = () => {
 
 // Backend communication
 const fetchSearchResults = async (requestObject) => {
-    const response = await fetch(`${BACKEND_ROOT_URL}/search-results`, {
+    const response = await fetch(`/search-results`, {
         method: "POST",
         headers: {
             "Content-Type": "application/json"

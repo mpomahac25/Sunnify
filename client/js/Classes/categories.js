@@ -7,10 +7,10 @@ class Categories {
 
     #allCategories = new Map();
 
-    #backendUrl = "";
+    //#backendUrl = "";
 
-    constructor(url) {
-        this.#backendUrl = url;
+    constructor() {
+        //this.#backendUrl = url;
 
         this.#allCategories.set("Subcategories", this.#subcategories);
         this.#allCategories.set("Categories", this.#categories);
@@ -18,7 +18,7 @@ class Categories {
 
     getAllCategories() {
         return new Promise(async (resolve, reject) => {
-            fetch(`${this.#backendUrl}/categories`)
+            fetch(`/categories`)
                 .then((response) => response.json())
                 .then((json) => {
                     this.#readJson(json);
