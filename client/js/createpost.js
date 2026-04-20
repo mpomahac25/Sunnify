@@ -1,4 +1,6 @@
 import { getSelectedLocation, getTypedLocationValue, markLocationInvalid, clearLocationInvalid } from "../Reusable-HTML/components/smartLocationDropdown.js";
+import { getSelectedCondition, setSelectedCondition, clearSelectedCondition, markConditionInvalid, clearConditionInvalid } from "./Reusable-HTML/components/conditionDropdown.js";
+import { getSelectedCategory, setSelectedCategory, clearSelectedCategory, markCategoryInvalid, clearCategoryInvalid } from "./Reusable-HTML/components/smartCategoryDropdown.js";
 
 (() => {
 
@@ -44,15 +46,26 @@ import { getSelectedLocation, getTypedLocationValue, markLocationInvalid, clearL
                 alert("Location selection must be a city, it cannot be a country or region");
                 return;
             }
-
+            
+            const selectedCategory = getSelectedCategory();
+            if (!getSelectedCategory()) {
+                markCategoryInvalid();
+                return false;
+            }
+            
+            const selectedCondition = getSelectedCondition();
+            if (!getSelectedCondition()) {
+                markConditionInvalid();
+                return false;
+            }
             // takes values
             const title = titleField.value.trim();
             const description = descriptionField.value.trim();
             const price = priceField.value.trim();
-            const condition = conditionField.value;
             const location = selectedLocation.name.trim();
             const cityId = selectedLocation.id;
-            const category = categoryField.value;
+            const category = selectedCategory ? selectedCategory.name : "";
+            const condition = selectedCondition ? selectedCondition.name : "";
 
             //validation
             const validationError = validateForm({

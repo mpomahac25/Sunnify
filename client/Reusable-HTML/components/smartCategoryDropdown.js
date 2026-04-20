@@ -176,6 +176,10 @@ const renderCategoryDropdown = (dropdownItems) => {
 };
 
 document.addEventListener("pointerdown", (event) => {
+    if (!categoryDropdown || !categoryInputField) {
+        return;
+    }
+    
     const clickedInsideDropdown = categoryDropdown.contains(event.target);
     const clickedInput = event.target === categoryInputField;
 
@@ -216,6 +220,34 @@ export const markCategoryInvalid = () => {
 
 export const clearCategoryInvalid = () => {
     if (categoryInputField) {
+        categoryInputField.classList.remove("is-invalid");
+    }
+};
+
+export const setTypedCategoryValue = (value) => {
+    if (categoryInputField) {
+        categoryInputField.value = value ?? "";
+    }
+};
+
+export const setSelectedCategoryByName = (value) => {
+    if (!value) {
+        clearSelectedCategory();
+        return;
+    }
+
+    const normalizedValue = value.trim().toLowerCase();
+    const match = categoriesFlatArray.find(category => category.name.toLowerCase() === normalizedValue);
+
+    if (!match) {
+        setTypedCategoryValue(value);
+        return;
+    }
+
+    selectedCategory = match;
+
+    if (categoryInputField) {
+        categoryInputField.value = match.name;
         categoryInputField.classList.remove("is-invalid");
     }
 };
