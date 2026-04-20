@@ -1,8 +1,6 @@
 import { getSelectedLocation, getTypedLocationValue, markLocationInvalid, clearLocationInvalid, setTypedLocationValue } from "../Reusable-HTML/components/smartLocationDropdown.js";
 
 (() => {
-    const EDIT_POST_BACKEND_URL = "http://127.0.0.1:3000"
-
     document.addEventListener("DOMContentLoaded", async () => {
         const params = new URLSearchParams(window.location.search);
         const postId = parseInt(params.get("id"));
@@ -14,7 +12,7 @@ import { getSelectedLocation, getTypedLocationValue, markLocationInvalid, clearL
         }
 
         try {
-            const response = await fetch(`${EDIT_POST_BACKEND_URL}/posts/${postId}`, {
+            const response = await fetch(`/posts/${postId}`, {
                 method: "get",
             });
 
@@ -73,7 +71,7 @@ import { getSelectedLocation, getTypedLocationValue, markLocationInvalid, clearL
             try {
                 console.log(payload)
 
-                const patchResponse = await fetch(`${EDIT_POST_BACKEND_URL}/posts/${postId}`,{
+                const patchResponse = await fetch(`/posts/${postId}`,{
                   method: "PATCH",
                   headers : {
                     "Content-Type" : "application/json"

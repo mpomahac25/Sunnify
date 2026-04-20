@@ -9,11 +9,7 @@ class Locations {
 
     #locations = new Map();
 
-    //#backendUrl = "";
-
     constructor() {
-        //this.#backendUrl = url;
-
         this.#locations.set("Countries", this.#countries);
         this.#locations.set("Regions", this.#regions);
         this.#locations.set("Cities", this.#cities);

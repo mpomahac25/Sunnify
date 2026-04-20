@@ -7,11 +7,7 @@ class Categories {
 
     #allCategories = new Map();
 
-    //#backendUrl = "";
-
     constructor() {
-        //this.#backendUrl = url;
-
         this.#allCategories.set("Subcategories", this.#subcategories);
         this.#allCategories.set("Categories", this.#categories);
     }

@@ -1,7 +1,6 @@
 import { getSelectedLocation, getTypedLocationValue, markLocationInvalid, clearLocationInvalid } from "../Reusable-HTML/components/smartLocationDropdown.js";
 
 (() => {
-    const CREATE_POST_BACKEND_URL = "http://127.0.0.1:3000";
 
     document.addEventListener("DOMContentLoaded", async () => {
         // gets elems by ids
@@ -18,7 +17,7 @@ import { getSelectedLocation, getTypedLocationValue, markLocationInvalid, clearL
 
         try {
             //checks if user logged in
-            const sessionResponse = await fetch(`${CREATE_POST_BACKEND_URL}/check-session`, {
+            const sessionResponse = await fetch(`/check-session`, {
                 method: "get",
                 credentials: "include"
             });
@@ -84,7 +83,7 @@ import { getSelectedLocation, getTypedLocationValue, markLocationInvalid, clearL
 
             try {
                 // sends to /posts
-                const response = await fetch(`${CREATE_POST_BACKEND_URL}/posts`, {
+                const response = await fetch(`/posts`, {
                     method: "post",
                     headers: {
                         "Content-Type": "application/json"
