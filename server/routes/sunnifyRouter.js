@@ -656,6 +656,21 @@ sunnifyRouter.get("/conversations", isUserAuthenticated, async (req, res) => {
     }
 });
 
+// Clean up self-contact conversations (POST only, not GET)
+sunnifyRouter.post("/conversations/cleanup-self-contact", async (req, res) => {
+    try {
+        const { data, error } = await supabase
+            .from('conversations')
+            .delete()
+            .eq('user1_id', supabase.raw('user2_id'));
+        
+        if (error) throw error;
+        res.json({ deleted: data.length || 0 });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 // Create a conversation between 2 users if it does not exist, or return the id if it already exists
 sunnifyRouter.post("/conversation/check-or-create", isUserAuthenticated, async (req, res) => {
     try {

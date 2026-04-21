@@ -11,6 +11,11 @@ const conversationId = urlParams.get("conversationId");
 const postId = urlParams.get("postId");
 const sellerId = urlParams.get("sellerId");
 
+// Global variables to make it easier to access the data from the console for debugging
+window.conversations = conversations;
+window.currentUser = currentUser;
+window.currentConversation = currentConversation;
+
 // Delete stuff
 let selectedConversations = [];
 const deleteBtn = document.getElementById("deleteConversationsBtn");
@@ -44,6 +49,7 @@ async function getCurrentUser() {
     const res = await fetch("/check-session", { credentials: "include" });
     const data = await res.json();
     currentUser = data.userId;
+    window.currentUser = currentUser;
 }
 
 function updateDeleteButton() {
@@ -65,6 +71,7 @@ async function loadConversations() {
     conversations = data.conversations.map(
         (conv) => new Conversation(conv.id, [conv.user1_id, conv.user2_id], [], conv.post_id),
     );
+    window.conversations = conversations;
     showConversationsList();
 
     if (conversationId) {
@@ -106,6 +113,7 @@ async function selectConversation(id) {
     const found = conversations.find((conv) => Number(conv.id) === Number(id));
     if (found) {
         currentConversation = found;
+        window.currentConversation = currentConversation;
         // Update the product header when selecting a conversation
         updateProductHeader(found.post_id);
         // Load messages for the selected conversation from the backend
@@ -250,6 +258,7 @@ async function deleteSelectedConversations() {
             updateDeleteButton();
             // Clean the current conversation if it was among the deleted ones
             currentConversation = null;
+            window.currentConversation = currentConversation;
             // Load conversations again to refresh the list
             const res2 = await fetch("/conversations", { credentials: "include" });
             const data = await res2.json();
@@ -257,6 +266,7 @@ async function deleteSelectedConversations() {
                 (conv) =>
                     new Conversation(conv.id, [conv.user1_id, conv.user2_id], [], conv.post_id),
             );
+            window.conversations = conversations;
             showConversationsList();
             // Clean the messages on the screen
             document.getElementById("messagesListEl").innerHTML = "";
