@@ -20,7 +20,7 @@
                         <div class="card border-0 h-100 profile-hero">
                             <div class="card-body p-4 p-md-5">
                                 <div class="d-flex flex-column flex-md-row gap-4 align-items-md-center">
-                                    <div class="profile-avatar rounded-circle d-flex align-items-center justify-content-center flex-shrink-0">
+                                    <div class="profile-avatar rounded-circle d-flex align-items-center justify-content-center">
                                         <i class="bi bi-person fs-1 text-white"></i>
                                     </div>
                                     <div class="flex-grow-1">
@@ -33,7 +33,7 @@
                                         <div class="row g-3 profile-stats">
                                             <div class="col-6 col-md-3">
                                                 <div class="stat-card">
-                                                    <div class="stat-value" id="profile-rating">4.9</div>
+                                                    <div class="stat-value" id="profile-rating">-</div>
                                                     <div class="stat-label">Rating</div>
                                                 </div>
                                             </div>
@@ -45,7 +45,7 @@
                                             </div>
                                             <div class="col-6 col-md-3">
                                                 <div class="stat-card">
-                                                    <div class="stat-value" id="profile-saved-posts-count">38</div>
+                                                    <div class="stat-value" id="profile-saved-posts-count">-</div>
                                                     <div class="stat-label">Saved items</div>
                                                 </div>
                                             </div>
@@ -82,7 +82,7 @@
                     </li>
                 </ul>
 
-                <section id="saved-items" class="mb-5">
+                <section class="mb-5">
                     <div class="d-flex justify-content-between align-items-center mb-3">
                         <div>
                             <h2 class="h4 mb-1">Saved Items</h2>
@@ -90,67 +90,7 @@
                         </div>
                         <button class="btn btn-outline-secondary btn-sm">View all</button>
                     </div>
-                    <div class="row g-4">
-                        <div class="col-12 col-sm-6 col-lg-4">
-                            <div class="img-container card h-100">
-                                <div class="carousel-container"></div>
-                                <div class="card-body">
-                                    <div class="d-flex justify-content-between gap-3">
-                                        <div>
-                                            <h3 class="h6 card-title mb-1">Summer Sandals</h3>
-                                            <p class="text-muted mb-2">Oulu, Tuira</p>
-                                        </div>
-                                    </div>
-                                    <span class="fw-bold">10 EUR</span>
-                                </div>
-                                <div class="card-footer d-flex justify-content-between align-items-center">
-                                    <small class="text-muted">Added 2 days ago</small>
-                                    <button class="favorite-btn btn btn-outline-danger btn-sm">
-                                        <i class="bi bi-heart fs-4"></i>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-12 col-sm-6 col-lg-4">
-                            <div class="img-container card h-100">
-                                <div class="carousel-container"></div>
-                                <div class="card-body">
-                                    <div class="d-flex justify-content-between gap-3">
-                                        <div>
-                                            <h3 class="h6 card-title mb-1">Woven Bag</h3>
-                                            <p class="text-muted mb-2">Oulu, Keskusta</p>
-                                        </div>
-                                    </div>
-                                    <span class="fw-bold">18 EUR</span>
-                                </div>
-                                <div class="card-footer d-flex justify-content-between align-items-center">
-                                    <small class="text-muted">Added this week</small>
-                                    <button class="favorite-btn btn btn-outline-danger btn-sm">
-                                        <i class="bi bi-heart fs-4"></i>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-12 col-sm-6 col-lg-4">
-                            <div class="img-container card h-100">
-                                <div class="carousel-container"></div>
-                                <div class="card-body">
-                                    <div class="d-flex justify-content-between gap-3">
-                                        <div>
-                                            <h3 class="h6 card-title mb-1">Desk Lamp</h3>
-                                            <p class="text-muted mb-2">Oulu, Alppila</p>
-                                        </div>
-                                    </div>
-                                    <span class="fw-bold">22 EUR</span>
-                                </div>
-                                <div class="card-footer d-flex justify-content-between align-items-center">
-                                    <small class="text-muted">Added today</small>
-                                    <button class="favorite-btn btn btn-outline-danger btn-sm">
-                                        <i class="bi bi-heart fs-4"></i>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
+                    <div id="saved-items-list" class="row g-4">
                     </div>
                 </section>
 

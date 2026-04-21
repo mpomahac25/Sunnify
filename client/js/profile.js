@@ -81,13 +81,15 @@ import { createPostCard } from "../Reusable-HTML/components/postCard.js";
         setText("profile-name", profile.username);
         setText("profile-posts-count", profile.posts_count);
         setText("profile-created-at", formatMemberSince(profile.created_at));
+        //setText("profile-rating", profile.rating)
+        //setText("profile-saved-posts-count", profile.saved_posts_count)
     };
 
     const renderMissingProfile = (message) => {
         setText("profile-name", "Profile unavailable");
-        setText("profile-rating", "-");
+        //setText("profile-rating", "aaaaa");
         setText("profile-posts-count", "Unavailable");
-        setText("profile-saved-posts-count", "-");
+        //setText("profile-saved-posts-count", "aaaa");
         setText("profile-created-at", message || "Member since unavailable");
     };
 

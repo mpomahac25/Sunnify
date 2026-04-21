@@ -5,6 +5,8 @@
         const params = new URLSearchParams(window.location.search);
         const postId = parseInt(params.get("id"));
 
+        const viewProfileButton = document.getElementById("view-seller-profile-btn");
+
         // Validate the id parsed from the URL.
         if (Number.isNaN(postId)) {
             // If invalid, render a "missing post" state and stop.
@@ -29,6 +31,9 @@
 
             // Populate the page with the post data.
             renderPost(result);
+            viewProfileButton?.addEventListener("click", () => {
+                window.location.href = `profile.html?id=${result.seller_id}`;
+            });
         } catch (error) {
             // Network or unexpected error: log and show a network-error message.
             console.error(error);
@@ -52,6 +57,8 @@
 
         // The API now returns the seller's username; display it or fall back to "Seller".
         setText("seller-name", post.seller_username || "Seller");
+        setText("seller-items-sold", post.seller_posts_count + " items listed");
+        setText("seller-member-since", formatMemberSince(post.seller_created_at));
 
         // Add behavior to the "Contact seller" button: redirect to the chat page
         // and include the `sellerId` in the query string so the chat can open/create the appropriate conversation.
@@ -114,6 +121,19 @@
 
         // Use the browser locale to format the date portion.
         return `Posted ${date.toLocaleDateString()}`;
+    };
+
+    const formatMemberSince = (createdAt) => {
+        if (!createdAt) {
+            return "Unknown";
+        }
+
+        const date = new Date(createdAt);
+
+        return date.toLocaleDateString("en-GB", {
+            month: "long",
+            year: "numeric"
+        });
     };
 
     // capitalize(value): upper-case the first character and return the rest unchanged.

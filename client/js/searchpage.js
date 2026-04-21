@@ -563,5 +563,3 @@ document.addEventListener("DOMContentLoaded", async () => {
         console.error("Initial search failed:", error);
     }
 });
-
-
