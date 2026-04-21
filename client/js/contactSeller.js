@@ -11,7 +11,7 @@ async function getCurrentUserId() {
 const contactBtn = document.getElementById("contactSellerBtn");
 
 // Get the post id
-// const postId = contactBtn?.getAttribute("data-post-id");
+const postId = contactBtn?.getAttribute("data-post-id");
 
 // Get the seller id
 const sellerId = contactBtn?.getAttribute("data-seller-id");
