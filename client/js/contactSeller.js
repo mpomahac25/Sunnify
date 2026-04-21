@@ -7,12 +7,14 @@ async function getCurrentUserId() {
     return data.userId;
 }
 
-// Get the seller id
+// Get the contact seller button and its data attributes for post id and seller id
 const contactBtn = document.getElementById("contactSellerBtn");
 
-// If expression before ? is null, then the parts after ? aren't executed and null is returned as the result of the whole expression
-const postId = contactBtn.getAttribute("data-post-id");
-const sellerId = contactBtn?.getAttribute("data-seller-id"); 
+// Get the post id
+// const postId = contactBtn?.getAttribute("data-post-id");
+
+// Get the seller id
+const sellerId = contactBtn?.getAttribute("data-seller-id");
 
 contactBtn?.addEventListener("click", async () => {
     const currentUserId = await getCurrentUserId();

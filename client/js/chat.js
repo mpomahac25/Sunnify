@@ -119,7 +119,17 @@ async function selectConversation(id) {
         // Load messages for the selected conversation from the backend
         const res = await fetch(`/conversations/${id}/messages`, { credentials: "include" });
         const data = await res.json();
-        currentConversation.messages = data.messages.map((msg) => new Message(msg));
+        currentConversation.messages = data.messages.map(
+            (msg) =>
+                new Message(
+                    msg.id,
+                    msg.content,
+                    msg.sent_at,
+                    msg.sender_id,
+                    msg.receiver_id,
+                    msg.conversation_id,
+                ),
+        );
         showMsg();
     } else {
         console.log("No conversation found with that id");
@@ -144,10 +154,9 @@ async function showConversationsList() {
         }
 
         // Fetch user and post data
-        const [userRes, postRes] = await Promise.all([
-            fetch(`/users/${otherUserId}`),
-            fetch(`/posts/${conversation.post_id}`),
-        ]);
+        const userRes = await fetch(`/users/${otherUserId}`);
+        const postRes = await fetch(`/posts/${conversation.post_id}`);
+
         const userData = await userRes.json();
         const postData = await postRes.json();
 
@@ -166,13 +175,18 @@ async function showConversationsList() {
         checkbox.addEventListener("change", (event) => {
             event.stopPropagation();
             const id = Number(event.target.dataset.conversationId);
+
             if (event.target.checked) {
-                if (!selectedConversations.includes(id)) selectedConversations.push(id);
+                if (!selectedConversations.includes(id)) {
+                    selectedConversations.push(id);
+                }
             } else {
-                selectedConversations = selectedConversations.filter(
-                    (conversationId) => conversationId !== id,
-                );
+                const index = selectedConversations.indexOf(id);
+                if (index > -1) {
+                    selectedConversations.splice(index, 1);
+                }
             }
+            
             updateDeleteButton();
         });
 

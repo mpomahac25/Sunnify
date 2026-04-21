@@ -1,8 +1,7 @@
 import Message from "./message.js";
 
-// conversation.js defines how a conversation in the chat will look and be like
+// Class to represent a conversation (how the chat will look like)
 
-// Create a class to have the structure of what the conversation will be like
 class Conversation {
     constructor(id, users, messages, post_id) {
         this.id = id;
