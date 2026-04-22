@@ -49,8 +49,8 @@ function createSearchObject() {
         locationId: urlParams.get("id") || "",
         sortType: "relevance",
         filters: {
-            categoryId: "",
-            subcategoryId: "",
+            categoryId: urlParams.get("categoryId") || "",
+            subcategoryId: urlParams.get("subcategoryId") || "",
             conditionId: "",
             priceMin: "",
             priceMax: ""
