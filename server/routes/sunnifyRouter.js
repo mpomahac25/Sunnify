@@ -54,7 +54,9 @@ sunnifyRouter.post("/register", preventAuthAccess, async (req, res) => {
 
         // Create new user in database
         result = await query(
-            `INSERT INTO users (username, email, password_hash) VALUES ($1, $2, $3) RETURNING id`,
+            `INSERT INTO users (username, email, password_hash) 
+                VALUES ($1, $2, $3) 
+                RETURNING id`,
             [req.body.username, req.body.email, pwEncrypted]
         );
         res.status(200).json({ id: result.rows[0].id });
@@ -656,21 +658,6 @@ sunnifyRouter.get("/conversations", isUserAuthenticated, async (req, res) => {
     }
 });
 
-// Clean up self-contact conversations (POST only, not GET)
-sunnifyRouter.post("/conversations/cleanup-self-contact", async (req, res) => {
-    try {
-        const { data, error } = await supabase
-            .from('conversations')
-            .delete()
-            .eq('user1_id', supabase.raw('user2_id'));
-        
-        if (error) throw error;
-        res.json({ deleted: data.length || 0 });
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-});
-
 // Create a conversation between 2 users if it does not exist, or return the id if it already exists
 sunnifyRouter.post("/conversation/check-or-create", isUserAuthenticated, async (req, res) => {
     try {
@@ -683,8 +670,8 @@ sunnifyRouter.post("/conversation/check-or-create", isUserAuthenticated, async (
         const sessionUser = req.session.userId;
 
         // Basic validation, numbers must be valid
-        if (Number.isNaN(user1) || Number.isNaN(user2)) {
-            return res.status(400).json({ error: "Invalid user ids" });
+        if (Number.isNaN(user1) || Number.isNaN(user2) || Number.isNaN(postId)) {
+            return res.status(400).json({ error: "Invalid user ids or post id" });
         }
 
         // Validation: only can create the conversation if the logged user is one of the 2 
@@ -795,9 +782,10 @@ sunnifyRouter.post("/conversations/:id/messages", isUserAuthenticated, async (re
         }
 
         // Determine the receiver id (the other user in the conversation
+        // Ternary operator if the session user is user1, then the receiver is user2, otherwise the receiver is user1
         const receiverId = (sessionUser === conversation.user1_id)
-            ? conversation.user2_id
-            : conversation.user1_id;
+            ? conversation.user2_id     // If TRUE: use user2_id
+            : conversation.user1_id;    // If FALSE: use user1_id
 
         // Insert the message
         const insertResult = await query(
@@ -818,8 +806,9 @@ sunnifyRouter.post("/conversations/:id/messages", isUserAuthenticated, async (re
 // Delete conversations that belong to the authenticated user
 sunnifyRouter.delete("/conversations", isUserAuthenticated, async (req, res) => {
     try {
-        const { conversationIds } = req.body;
+        const conversationIds = req.body.conversationIds;
         const userId = req.session.userId;
+        // If conversationIds is not an array or if its empty, send an error
         if (!Array.isArray(conversationIds) || conversationIds.length === 0) {
             return res.status(400).json({ error: "No conversations selected" });
         }
