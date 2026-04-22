@@ -281,7 +281,12 @@ sunnifyRouter.get("/posts/:id", async (req, res) => {
 
         // selects all elems
         const result = await query(
-            `SELECT p.id, p.title, p.description, p.price, p.user_id AS seller_id, u.username AS seller_username,
+            `SELECT p.id, p.title, p.description, p.price, p.user_id AS seller_id, u.username AS seller_username, u.created_at AS seller_created_at,
+            (
+                SELECT COUNT(*)
+                FROM posts sp
+                WHERE sp.user_id = u.id
+            ) AS seller_posts_count, 
             c.name AS location, pc.name AS category, cond.condition AS condition, ps.status AS status, p.created_at
             FROM posts p
             LEFT JOIN users u ON u.id = p.user_id

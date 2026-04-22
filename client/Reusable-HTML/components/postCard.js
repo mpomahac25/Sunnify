@@ -5,7 +5,7 @@ const formatPostPrice = (price) => {
         return "Price unavailable";
     }
 
-    return `${parsedPrice} EUR`;
+    return `${parsedPrice.toLocaleString("en-US")} EUR`;
 };
 
 export const createPostCard = (post, options = {}) => {

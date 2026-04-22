@@ -7,11 +7,12 @@ document.addEventListener("DOMContentLoaded", async () => {
         const res = await fetch("/Reusable-HTML/components/header.html");
         const html = await res.text();
         container.innerHTML = html;
-
+        
         // Set absolute href path(s)
         const navbarBrand = container.querySelector(".navbar-brand");
         const createPostButton = container.querySelector("#createpost-btn");
         const accountMenuContainer = container.querySelector("#account-menu-container");
+        const chatLinkContainer = container.querySelector("#chat-link-container");
 
         navbarBrand.setAttribute("href", `/`);
         createPostButton?.setAttribute("href", `/createpost`);
@@ -25,6 +26,18 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         if (result.loggedIn) {
             createPostButton?.classList.remove("d-none");
+
+            chatLinkContainer.innerHTML = `
+                <a
+                    href="../page-examples/chatpage-example.html?sellerId=${result.userId}"
+                    class="btn btn-outline-primary rounded-square d-flex align-items-center justify-content-center"
+                    style="width: 42px; height: 42px;"
+                    aria-label="Chat"
+                >
+                    <i class="bi bi-chat-dots fs-5"></i>
+                </a>
+            `;
+
             const accountMenuResponse = await fetch("/Reusable-HTML/components/accountMenu.html");
             const accountMenuHtml = await accountMenuResponse.text();
             accountMenuContainer.innerHTML = accountMenuHtml;
@@ -77,7 +90,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                 >
                     <i class="bi bi-person-circle fs-5"></i>
                 </a>
-            `;
+                `
         }
     } catch (error) {
         console.error(error);
