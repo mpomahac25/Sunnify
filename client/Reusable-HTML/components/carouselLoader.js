@@ -22,7 +22,9 @@
             `;
         }
 
-        return images.map((image, index) => `
+        return images
+            .map(
+                (image, index) => `
             <div class="carousel-item ${index === 0 ? "active" : ""}">
                 <div class="ratio ratio-1x1 w-100">
                     <img
@@ -33,7 +35,9 @@
                     >
                 </div>
             </div>
-        `).join("");
+        `,
+            )
+            .join("");
     };
 
     const populateCarouselContent = (container) => {
@@ -46,22 +50,33 @@
         const images = getImagesFromContainer(container);
         carouselInner.innerHTML = buildCarouselItemsMarkup(images);
 
-        const controls = container.querySelectorAll(".carousel-control-prev, .carousel-control-next");
-        controls.forEach(control => {
+        const controls = container.querySelectorAll(
+            ".carousel-control-prev, .carousel-control-next",
+        );
+
+
+        controls.forEach((control) => {
             control.style.display = images.length > 1 ? "" : "none";
         });
+
+        // Initialize Bootstrap carousel
+        const carouselElement = container.querySelector(".carousel");
+        if (carouselElement) {
+            new bootstrap.Carousel(carouselElement);
+        }
     };
 
     const getCarouselTemplate = async () => {
         if (!carouselTemplatePromise) {
-            carouselTemplatePromise = fetch("/Reusable-HTML/components/carousel.html")
-                .then(response => {
+            carouselTemplatePromise = fetch("/Reusable-HTML/components/carousel.html").then(
+                (response) => {
                     if (!response.ok) {
                         throw new Error("Carousel template could not be loaded.");
                     }
 
                     return response.text();
-                });
+                },
+            );
         }
 
         return carouselTemplatePromise;
@@ -79,7 +94,7 @@
         const carouselId = `post-carousel-${carouselIdCounter}`;
         carouselElement.id = carouselId;
 
-        container.querySelectorAll("[data-bs-target]").forEach(control => {
+        container.querySelectorAll("[data-bs-target]").forEach((control) => {
             control.setAttribute("data-bs-target", `#${carouselId}`);
         });
     };
@@ -94,15 +109,15 @@
         try {
             const template = await getCarouselTemplate();
 
-            containers.forEach(container => {
+            containers.forEach((container) => {
                 if (container.dataset.carouselReady === "true") {
                     return;
                 }
 
                 container.innerHTML = template;
-                populateCarouselContent(container);
+                assignUniqueCarouselId(container); // Set ID first
+                populateCarouselContent(container); // Initialize Bootstrap with correct ID
                 container.dataset.carouselReady = "true";
-                assignUniqueCarouselId(container);
             });
         } catch (error) {
             console.error(error);

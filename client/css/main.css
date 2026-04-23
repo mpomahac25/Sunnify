@@ -6,27 +6,24 @@ main {
 }
 
 .carousel {
-    max-width: 350px;
+    max-width: 100%;
     width: 100%;
     aspect-ratio: 1;
     margin: 0 auto;
 }
 
-
 .img-holder {
-    min-width: 200px;
-    max-width: 350px;
-    min-height: 200px;
-    max-height: 350px;
+    width: 100%;
+    height: 100%;
     background-color: blueviolet;
     border-radius: 1rem;
     object-fit: cover;
 }
 
-@media(max-width: 991.98px){
-    .carousel{
-        margin: 0 5% 0 5%;
-        width: 90%;
+@media (max-width: 991.98px) {
+    .carousel {
+        margin: 0;
+        width: 100%;
     }
 }
 
@@ -37,20 +34,17 @@ main {
 }
 
 .carousel-item {
-    border-radius: 1rem; 
-    overflow: hidden; 
-
+    border-radius: 1rem;
+    overflow: hidden;
 }
 
 .carousel-item .img-holder {
-    border-radius: 1rem; 
+    border-radius: 1rem;
 }
-
 
 .favorite-btn {
     border: none;
 }
-
 
 .card-footer {
     border-top: none;
