@@ -19,13 +19,6 @@ main {
     object-fit: cover;
 }
 
-@media (max-width: 991.98px) {
-    .carousel {
-        margin: 0;
-        width: 100%;
-    }
-}
-
 .img-container.card {
     height: 100%;
     border: none;
