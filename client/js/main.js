@@ -38,7 +38,7 @@ searchForm.addEventListener("submit", async (event) => {
 document.addEventListener("DOMContentLoaded", async () => {
     const postsList = document.getElementById("posts-list");
 
-    //checks if posts-section is ok
+    // checks if posts-section is ok
     if (!postsList) {
         return;
     }
@@ -78,7 +78,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 });
 
-// price => number
 const formatPrice = (price) => {
     const parsedPrice = Number(price);
 
@@ -102,7 +101,7 @@ const categoryIconMap = {
     Sports: "bi-person-arms-up",
     Kids: "bi-emoji-smile",
     Vehicles: "bi-car-front",
-    Pets: "bi bi-android",
+    Pets: "bi-android",
     Beauty: "bi-heart",
     "Real Estate": "bi-building",
     Jobs: "bi-briefcase",
@@ -123,7 +122,7 @@ function renderCategories(categories) {
             <div class="d-flex flex-column align-items-center px-2 category-link" 
                  style="min-width:90px; cursor:pointer;" 
                  data-category="${encodeURIComponent(name)}">
-                <i class="bi ${icon} fs-2"></i>
+                <i class="bi ${icon} fs-2 text-primary"></i>
                 <div class="small mt-1 text-center text-nowrap">${name}</div>
             </div>
         `;
@@ -137,7 +136,6 @@ function renderCategories(categories) {
         });
     });
 
-    // DELETE the extra "container.innerHTML +=" block that was at the end here!
 }
 document.addEventListener("DOMContentLoaded", async () => {
     try {
