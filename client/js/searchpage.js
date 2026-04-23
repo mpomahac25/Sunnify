@@ -1,15 +1,28 @@
-import { getSelectedCategory, getTypedCategoryValue, clearSelectedCategory, markCategoryInvalid, clearCategoryInvalid } from "../Reusable-HTML/components/smartCategoryDropdown.js";
-import { getSelectedLocation, getTypedLocationValue, clearSelectedLocation, markLocationInvalid, clearLocationInvalid } from "../Reusable-HTML/components/smartLocationDropdown.js";
-import { getSelectedCondition, clearSelectedCondition } from "../Reusable-HTML/components/conditionDropdown.js";
+import {
+    getSelectedCategory,
+    getTypedCategoryValue,
+    clearSelectedCategory,
+    markCategoryInvalid,
+    clearCategoryInvalid,
+} from "../Reusable-HTML/components/smartCategoryDropdown.js";
+import {
+    getSelectedLocation,
+    getTypedLocationValue,
+    clearSelectedLocation,
+    markLocationInvalid,
+    clearLocationInvalid,
+} from "../Reusable-HTML/components/smartLocationDropdown.js";
+import {
+    getSelectedCondition,
+    clearSelectedCondition,
+} from "../Reusable-HTML/components/conditionDropdown.js";
 import { createPostCard } from "../Reusable-HTML/components/postCard.js";
 
 // Const config vars
 const PRICE_GROUPS = [
-    10, 20, 30, 40, 50, 60, 70, 80, 90,
-    100, 200, 300, 400, 500, 600, 700, 800, 900,
-    1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000,
-    10000, 20000, 30000, 40000, 50000, 60000, 70000, 80000, 90000,
-    100000, 200000, 300000, 400000, 500000, 600000, 700000, 800000, 900000, 1000000
+    10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000, 2000,
+    3000, 4000, 5000, 6000, 7000, 8000, 9000, 10000, 20000, 30000, 40000, 50000, 60000, 70000,
+    80000, 90000, 100000, 200000, 300000, 400000, 500000, 600000, 700000, 800000, 900000, 1000000,
 ];
 const PRICE_SLIDER_STEPS = 100;
 
@@ -18,12 +31,12 @@ const resultsGrid = document.getElementById("resultsGrid");
 const resultsCount = document.getElementById("resultsCount");
 
 // Filtering
-const applyBtn = document.getElementById('apply-filters-btn');
-const resetBtn = document.getElementById('reset-filters-btn');
-const filtersCollapse = document.getElementById('filtersCollapse');
+const applyBtn = document.getElementById("apply-filters-btn");
+const resetBtn = document.getElementById("reset-filters-btn");
+const filtersCollapse = document.getElementById("filtersCollapse");
 
 // Sorting
-const sortSelect = document.getElementById('sort-select'); // TODO: Add element (if missing) and functionalities
+const sortSelect = document.getElementById("sort-select"); // TODO: Add element (if missing) and functionalities
 
 // Price slider
 const minSlider = document.getElementById("price-min");
@@ -38,6 +51,15 @@ let allResults = [];
 let filteredResultsWithoutPrice = [];
 let lastNonPriceFilterKey = "";
 
+// Helper to get URL parameters
+function getQueryParam(param) {
+    const urlParams = new URLSearchParams(window.location.search);
+    return urlParams.get(param);
+}
+
+// Get the category from the URL if present
+const selectedCategoryName = getQueryParam("category");
+
 // Search object stuff
 function createSearchObject() {
     const urlParams = new URLSearchParams(window.location.search);
@@ -49,12 +71,12 @@ function createSearchObject() {
         locationId: urlParams.get("id") || "",
         sortType: "relevance",
         filters: {
-            categoryId: urlParams.get("categoryId") || "",
+            categoryId: "",
             subcategoryId: urlParams.get("subcategoryId") || "",
             conditionId: "",
             priceMin: "",
-            priceMax: ""
-        }
+            priceMax: "",
+        },
     };
 }
 
@@ -63,7 +85,7 @@ const getPriceFilterValues = () => {
 
     return {
         priceMin: minSlider ? Number(minSlider.value) : 0,
-        priceMax: maxSlider ? Number(maxSlider.value) : 0
+        priceMax: maxSlider ? Number(maxSlider.value) : 0,
     };
 };
 
@@ -74,27 +96,31 @@ const getLocationFilterValues = () => {
         return {
             locationId: "",
             locationType: "",
-            locationName: ""
+            locationName: "",
         };
     }
 
     return {
         locationId: String(locationChoice.id),
         locationType: locationChoice.type,
-        locationName: locationChoice.name
+        locationName: locationChoice.name,
     };
 };
 
 const getCategoryFilterValues = () => {
     let categoryObject = {
         categoryId: "",
-        subcategoryId: ""
+        subcategoryId: "",
     };
     const categoryChoice = getSelectedCategory();
 
     if (categoryChoice) {
-        categoryObject.categoryId = String(categoryChoice.type === "category" ? categoryChoice.id : categoryChoice.categoryId);
-        categoryObject.subcategoryId = String(categoryChoice.type === "subcategory" ? categoryChoice.id : "");
+        categoryObject.categoryId = String(
+            categoryChoice.type === "category" ? categoryChoice.id : categoryChoice.categoryId,
+        );
+        categoryObject.subcategoryId = String(
+            categoryChoice.type === "subcategory" ? categoryChoice.id : "",
+        );
     }
 
     return categoryObject;
@@ -123,7 +149,7 @@ const buildNonPriceFilterKey = () => {
         locationId: searchObject.locationId,
         categoryId: searchObject.filters.categoryId,
         subcategoryId: searchObject.filters.subcategoryId,
-        conditionId: searchObject.filters.conditionId
+        conditionId: searchObject.filters.conditionId,
     });
 };
 
@@ -132,9 +158,9 @@ const fetchSearchResults = async (requestObject) => {
     const response = await fetch(`/search-results`, {
         method: "POST",
         headers: {
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
         },
-        body: JSON.stringify(requestObject)
+        body: JSON.stringify(requestObject),
     });
 
     if (!response.ok) {
@@ -148,32 +174,22 @@ const fetchSearchResults = async (requestObject) => {
 const filterResultsNoPriceLimit = (results) => {
     if (!Array.isArray(results)) return [];
 
-    const {
-        categoryId,
-        subcategoryId,
-        conditionId
-    } = searchObject.filters;
+    const { categoryId, subcategoryId, conditionId } = searchObject.filters;
 
-    const {
-        locationName,
-        locationType,
-        locationId
-    } = getLocationFilterValues();
+    const { locationName, locationType, locationId } = getLocationFilterValues();
 
-    return results.filter(result => {
+    return results.filter((result) => {
         // Location filter
         if (locationType !== "") {
             if (locationType === "city") {
                 if (String(result.city_id) !== String(locationId)) {
                     return false;
                 }
-            }
-            else if (locationType === "region") {
+            } else if (locationType === "region") {
                 if (String(result.region_name) !== String(locationName)) {
                     return false;
                 }
-            }
-            else if (locationType === "country") {
+            } else if (locationType === "country") {
                 if (String(result.country_name) !== String(locationName)) {
                     return false;
                 }
@@ -208,7 +224,7 @@ const applyPriceFiltering = (results) => {
     const min = priceMin === "" ? 0 : Number(priceMin);
     const max = priceMax === "" ? Infinity : Number(priceMax);
 
-    return results.filter(result => {
+    return results.filter((result) => {
         const price = Number(result.price);
 
         if (Number.isNaN(price)) {
@@ -245,7 +261,8 @@ const filterResults = () => {
 const updateSearchResultsCount = () => {
     const count = resultsGrid ? resultsGrid.querySelectorAll(".result-card").length : 0;
     if (resultsCount) {
-        const resultOrResults = (count === 1 || (count % 10 === 1 && count % 100 !== 11)) ? "result" : "results";
+        const resultOrResults =
+            count === 1 || (count % 10 === 1 && count % 100 !== 11) ? "result" : "results";
         resultsCount.textContent = `${count} ${resultOrResults}`;
     }
 };
@@ -289,12 +306,12 @@ const renderResults = async (results) => {
             id: result.id,
             title: result.title,
             price: result.price,
-            location: buildPostLocationText(result)
+            location: buildPostLocationText(result),
         };
 
         const cardColumn = createPostCard(postCardData, {
             columnClassName: "col-12 col-sm-6 col-lg-4",
-            showFavoriteButton: true
+            showFavoriteButton: true,
         });
 
         cardColumn.classList.add("result-card");
@@ -329,7 +346,14 @@ const updatePriceSliderUI = () => {
     const step = Number(minSlider.step);
 
     // Validate that everything is a number
-    if (Number.isNaN(minValue) || Number.isNaN(maxValue) || Number.isNaN(min) || Number.isNaN(max) || Number.isNaN(step)) return;
+    if (
+        Number.isNaN(minValue) ||
+        Number.isNaN(maxValue) ||
+        Number.isNaN(min) ||
+        Number.isNaN(max) ||
+        Number.isNaN(step)
+    )
+        return;
 
     if (minValue > maxValue - step) {
         minValue = maxValue - step;
@@ -348,7 +372,7 @@ const updatePriceSliderUI = () => {
     const rightPercent = ((maxValue - min) / (max - min)) * 100;
 
     rangeFill.style.left = leftPercent + "%";
-    rangeFill.style.width = (rightPercent - leftPercent) + "%";
+    rangeFill.style.width = rightPercent - leftPercent + "%";
 };
 
 const setPriceSliderRange = (maxValue, step, preserveCurrentValues = true) => {
@@ -393,8 +417,8 @@ const determinePriceSliderRangeAndStep = (results) => {
     if (results.length === 0) return null;
 
     const prices = results
-        .map(result => Number(result.price))
-        .filter(price => !Number.isNaN(price) && price >= 0);
+        .map((result) => Number(result.price))
+        .filter((price) => !Number.isNaN(price) && price >= 0);
 
     const maxPrice = Math.max(...prices);
     const sliderMax = determinePriceGroup(maxPrice);
@@ -402,16 +426,16 @@ const determinePriceSliderRangeAndStep = (results) => {
 
     return {
         sliderMax,
-        step
+        step,
     };
 };
 
 const determinePriceGroup = (maxPrice) => {
-    let priceGroup = PRICE_GROUPS.find(groupMax => maxPrice <= groupMax);
+    let priceGroup = PRICE_GROUPS.find((groupMax) => maxPrice <= groupMax);
 
     if (!priceGroup) {
         // Use next multiple of 1,000,000 if highest price is above largest group
-        priceGroup = Math.ceil(maxPrice / 1000000) * 1000000
+        priceGroup = Math.ceil(maxPrice / 1000000) * 1000000;
     }
 
     return priceGroup;
@@ -436,11 +460,11 @@ const resetPriceSlider = () => {
     maxSlider.value = maxSlider.max;
 
     updatePriceSliderUI();
-}
+};
 
 // Event listeners
 if (applyBtn) {
-    applyBtn.addEventListener('pointerdown', (event) => {
+    applyBtn.addEventListener("pointerdown", (event) => {
         event.preventDefault();
 
         // Validate smart dropdowns
@@ -451,14 +475,16 @@ if (applyBtn) {
 
         // Close filters on mobile (bootstrap collapse)
         if (filtersCollapse && window.bootstrap) {
-            const bsCollapse = bootstrap.Collapse.getInstance(filtersCollapse) || new bootstrap.Collapse(filtersCollapse, { toggle: false });
+            const bsCollapse =
+                bootstrap.Collapse.getInstance(filtersCollapse) ||
+                new bootstrap.Collapse(filtersCollapse, { toggle: false });
             if (window.innerWidth < 992) bsCollapse.hide();
         }
     });
 }
 
 if (resetBtn) {
-    resetBtn.addEventListener('pointerdown', (event) => {
+    resetBtn.addEventListener("pointerdown", (event) => {
         event.preventDefault();
 
         // Clear filters
@@ -487,12 +513,12 @@ if (resetBtn) {
 }
 
 if (sortSelect) {
-    sortSelect.addEventListener('change', function () {
-        console.log('Sort:', sortSelect.value);
+    sortSelect.addEventListener("change", function () {
+        console.log("Sort:", sortSelect.value);
     });
 }
 
-document.querySelectorAll(".dropdown-menu .dropdown-item").forEach(item => {
+document.querySelectorAll(".dropdown-menu .dropdown-item").forEach((item) => {
     item.addEventListener("click", (event) => {
         event.preventDefault();
 
@@ -500,7 +526,7 @@ document.querySelectorAll(".dropdown-menu .dropdown-item").forEach(item => {
             sortDropdownButton.textContent = item.textContent;
         }
 
-        document.querySelectorAll(".dropdown-item").forEach(i => i.classList.remove("active"));
+        document.querySelectorAll(".dropdown-item").forEach((i) => i.classList.remove("active"));
         item.classList.add("active");
 
         searchObject.sortType = item.dataset.value || "relevance";
@@ -537,13 +563,31 @@ const validateCategoryFilter = () => {
 
 // Initialize data of webpage
 document.addEventListener("DOMContentLoaded", async () => {
-    // Initial results for placeholder, to be removed later
-    updateSearchResultsCount();
+    // Get category from URL
+    const selectedCategoryName = getQueryParam("category");
 
-    // Initialize price slider
+    // If there is a category in the URL, fetch categories and set the filter
+    if (selectedCategoryName) {
+        try {
+            const response = await fetch("/categories");
+            const categories = await response.json();
+
+            // categories is an array of { id, category, subcategories }
+            const found = categories.find(
+                (cat) => cat.category === decodeURIComponent(selectedCategoryName),
+            );
+            if (found) {
+                searchObject.filters.categoryId = String(found.id);
+            }
+        } catch (err) {
+            console.error("Failed to fetch categories for filter:", err);
+        }
+    }
+
+    // Fetch and render results as before
+    updateSearchResultsCount();
     initializePriceSlider();
 
-    // Fetch initial filtered data based on object
     try {
         const responseData = await fetchSearchResults(searchObject);
 
