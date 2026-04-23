@@ -54,7 +54,6 @@
             ".carousel-control-prev, .carousel-control-next",
         );
 
-
         controls.forEach((control) => {
             control.style.display = images.length > 1 ? "" : "none";
         });
@@ -97,6 +96,16 @@
         container.querySelectorAll("[data-bs-target]").forEach((control) => {
             control.setAttribute("data-bs-target", `#${carouselId}`);
         });
+    };
+
+    const initializeCarouselInstance = (container) => {
+        const carouselElement = container.querySelector(".carousel");
+
+        if (!carouselElement || !window.bootstrap?.Carousel) {
+            return;
+        }
+
+        window.bootstrap.Carousel.getOrCreateInstance(carouselElement);
     };
 
     const loadCarousels = async (root = document) => {
