@@ -5,47 +5,26 @@ main {
     background: #f8f9fa;
 }
 
-.carousel {
-    max-width: 350px;
-    width: 100%;
-    aspect-ratio: 1;
-    margin: 0 auto;
-}
-
-
 .img-holder {
-    min-width: 200px;
-    max-width: 350px;
-    min-height: 200px;
-    max-height: 350px;
     background-color: blueviolet;
-    border-radius: 1rem;
     object-fit: cover;
-}
-
-@media(max-width: 991.98px){
-    .carousel{
-        margin: 0 5% 0 5%;
-        width: 90%;
-    }
 }
 
 .img-container.card {
     height: 100%;
     border: none;
     border-radius: 1rem;
+    overflow: hidden;
 }
 
 .carousel-item {
-    border-radius: 1rem; 
-    overflow: hidden; 
-
+    overflow: hidden;
 }
 
-.carousel-item .img-holder {
-    border-radius: 1rem; 
+.carousel-item .img-holder,
+.carousel-item img {
+    border-radius: 1rem;
 }
-
 
 .favorite-btn {
     border: none;

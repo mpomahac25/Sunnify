@@ -84,6 +84,16 @@
         });
     };
 
+    const initializeCarouselInstance = (container) => {
+        const carouselElement = container.querySelector(".carousel");
+
+        if (!carouselElement || !window.bootstrap?.Carousel) {
+            return;
+        }
+
+        window.bootstrap.Carousel.getOrCreateInstance(carouselElement);
+    };
+
     const loadCarousels = async (root = document) => {
         const containers = root.querySelectorAll(".carousel-container");
 
@@ -100,9 +110,10 @@
                 }
 
                 container.innerHTML = template;
-                populateCarouselContent(container);
-                container.dataset.carouselReady = "true";
                 assignUniqueCarouselId(container);
+                populateCarouselContent(container);
+                initializeCarouselInstance(container);
+                container.dataset.carouselReady = "true";
             });
         } catch (error) {
             console.error(error);
