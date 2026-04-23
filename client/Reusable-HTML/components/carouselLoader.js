@@ -3,6 +3,55 @@
     let carouselTemplatePromise = null;
     let carouselIdCounter = 0;
 
+    const getImagesFromContainer = (container) => {
+        try {
+            const images = JSON.parse(container.dataset.images || "[]");
+            return Array.isArray(images) ? images : [];
+        } catch (error) {
+            console.error("Failed to parse carousel images.", error);
+            return [];
+        }
+    };
+
+    const buildCarouselItemsMarkup = (images) => {
+        if (!Array.isArray(images) || images.length === 0) {
+            return `
+                <div class="carousel-item active">
+                    <div class="img-holder ratio ratio-1x1 w-100"></div>
+                </div>
+            `;
+        }
+
+        return images.map((image, index) => `
+            <div class="carousel-item ${index === 0 ? "active" : ""}">
+                <div class="ratio ratio-1x1 w-100">
+                    <img
+                        src="${image.image_url}"
+                        class="w-100 h-100 object-fit-cover"
+                        alt="Post image"
+                        loading="lazy"
+                    >
+                </div>
+            </div>
+        `).join("");
+    };
+
+    const populateCarouselContent = (container) => {
+        const carouselInner = container.querySelector(".carousel-inner");
+
+        if (!carouselInner) {
+            return;
+        }
+
+        const images = getImagesFromContainer(container);
+        carouselInner.innerHTML = buildCarouselItemsMarkup(images);
+
+        const controls = container.querySelectorAll(".carousel-control-prev, .carousel-control-next");
+        controls.forEach(control => {
+            control.style.display = images.length > 1 ? "" : "none";
+        });
+    };
+
     const getCarouselTemplate = async () => {
         if (!carouselTemplatePromise) {
             carouselTemplatePromise = fetch("/Reusable-HTML/components/carousel.html")
@@ -51,6 +100,7 @@
                 }
 
                 container.innerHTML = template;
+                populateCarouselContent(container);
                 container.dataset.carouselReady = "true";
                 assignUniqueCarouselId(container);
             });

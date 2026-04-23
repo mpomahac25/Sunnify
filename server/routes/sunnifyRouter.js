@@ -217,7 +217,7 @@ sunnifyRouter.get("/post-conditions", async (req, res) => {
 // then inserts a new post returning its id.
 sunnifyRouter.post("/posts", isUserAuthenticated, async (req, res) => {
     try {
-        const { title, description, price, location, category, condition, status } = req.body;
+        const { title, description, price, location, category, condition, status, images } = req.body;
 
         if (!title || !description || !location || !category || !condition) {
             return res.status(400).json({ error: "Missing required fields" });
@@ -249,7 +249,8 @@ sunnifyRouter.post("/posts", isUserAuthenticated, async (req, res) => {
             `
             INSERT INTO posts (title, description, price, city_id, category_id, subcategory_id, condition, status, user_id)
             VALUES ($1, $2, $3, COALESCE((SELECT id FROM cities WHERE name = $4), 0), COALESCE((SELECT id FROM post_categories WHERE name = $5), 0), 0, COALESCE((SELECT id FROM post_condition WHERE condition = $6), 0), COALESCE((SELECT id FROM post_status WHERE status = $7), 0), $8)
-            RETURNING id`,
+            RETURNING id
+            `,
             [
                 title,
                 description,
@@ -261,7 +262,24 @@ sunnifyRouter.post("/posts", isUserAuthenticated, async (req, res) => {
                 req.session.userId,
             ],
         );
-        res.status(201).json({ id: result.rows[0].id });
+
+        const postId = result.rows[0].id;
+
+        const imageUrls = Array.isArray(images)
+            ? images.map((imageUrl) => typeof imageUrl === "string" ? imageUrl.trim() : "").filter(Boolean)
+            : [];
+
+        for (const imageUrl of imageUrls) {
+            await query(
+                `
+                INSERT INTO post_images (post_id, image_url)
+                VALUES ($1, $2)
+                `,
+                [postId, imageUrl],
+            );
+        }
+
+        res.status(201).json({ id: postId });
     } catch (error) {
         errorResponse(res, error);
     }
@@ -298,12 +316,25 @@ sunnifyRouter.get("/posts/:id", async (req, res) => {
             [id],
         );
 
+        const imagesResult = await query(
+            `
+            SELECT id, post_id, image_url
+            FROM post_images
+            WHERE post_id = $1
+            ORDER BY id ASC
+            `,
+            [id],
+        );
+
         // checks result
         if (result.rows.length === 0) {
             return res.status(404).json({ error: "Post not found" });
         }
 
-        res.status(200).json(result.rows[0]);
+        const post = result.rows[0];
+        post.images = imagesResult.rows;
+
+        res.status(200).json(post);
     } catch (error) {
         errorResponse(res, error);
     }
@@ -313,14 +344,33 @@ sunnifyRouter.get("/posts/:id", async (req, res) => {
 // Returns a list of posts (id, title, price, location) for index/listing pages.
 sunnifyRouter.get("/posts", async (req, res) => {
     try {
-        const result = await query(
+        const postsResult = await query(
             `
-            SELECT p.id, p.title, p.price, c.name AS location FROM posts p
+            SELECT p.id, p.title, p.price, c.name AS location
+            FROM posts p
             LEFT JOIN cities c ON c.id = p.city_id
             ORDER BY p.created_at DESC`,
         );
 
-        res.status(200).json(result.rows);
+        const posts = postsResult.rows;
+        const postIds = posts.map(p => p.id);
+
+        const imagesResult = await query(`
+        SELECT id, post_id, image_url
+        FROM post_images
+        WHERE post_id = ANY($1)
+        ORDER BY id ASC
+        `, [postIds]);
+        const imagesByPostId = {};
+        for (const img of imagesResult.rows) {
+        if (!imagesByPostId[img.post_id]) imagesByPostId[img.post_id] = [];
+        imagesByPostId[img.post_id].push(img);
+        }
+        for (const post of posts) {
+        post.images = imagesByPostId[post.id] || [];
+        }
+
+        res.status(200).json(posts);
     } catch (error) {
         errorResponse(res, error);
     }
@@ -353,6 +403,14 @@ sunnifyRouter.delete("/posts/:id", isUserAuthenticated, async (req, res) => {
         }
 
         // query to delete post
+        await query(
+            `
+            DELETE FROM post_images
+            WHERE post_id = $1
+            `,
+            [id],
+        );
+
         const deleteResult = await query(
             `
             DELETE FROM posts
@@ -395,7 +453,7 @@ sunnifyRouter.patch("/posts/:id", isUserAuthenticated, async (req, res) => {
             return res.status(403).json({ error: "Post is not yours" });
         }
 
-        const { title, description, price, location, category, condition, status } = req.body;
+        const { title, description, price, location, category, condition, status, images } = req.body;
 
         console.log("PATCH /posts payload:", {
             id,
@@ -458,6 +516,30 @@ sunnifyRouter.patch("/posts/:id", isUserAuthenticated, async (req, res) => {
                 id
             ]
         );
+
+        if (Array.isArray(images)) {
+            await query(
+                `
+                DELETE FROM post_images
+                WHERE post_id = $1
+                `,
+                [id],
+            );
+
+            const imageUrls = images
+                .map((imageUrl) => typeof imageUrl === "string" ? imageUrl.trim() : "").filter(Boolean);
+
+            for (const imageUrl of imageUrls) {
+                await query(
+                    `
+                    INSERT INTO post_images (post_id, image_url)
+                    VALUES ($1, $2)
+                    `,
+                    [id, imageUrl],
+                );
+            }
+        }
+
         res.status(200).json({ id: updateResult.rows[0].id });
     } catch (error) {
         errorResponse(res, error);
@@ -505,15 +587,32 @@ sunnifyRouter.get("/users/:id/posts", async (req, res) => {
             return res.status(400).json({ error: "Invalid profile id" });
         }
 
-        const result = await query(
+        const postsResult = await query(
             `
-            SELECT  p.id, p.title, p.price, c.name AS location FROM posts p
+            SELECT p.id, p.title, p.price, c.name AS location
+            FROM posts p
             LEFT JOIN cities c ON c.id = p.city_id WHERE p.user_id = $1
             ORDER BY p.created_at DESC;`,
             [id],
         );
 
-        res.status(200).json(result.rows);
+        const posts = postsResult.rows;
+
+        for (const post of posts) {
+            const imagesResult = await query(
+                `
+                SELECT id, post_id, image_url
+                FROM post_images
+                WHERE post_id = $1
+                ORDER BY id ASC
+                `,
+                [post.id],
+            );
+
+            post.images = imagesResult.rows;
+        }
+
+        res.status(200).json(posts);
     } catch (error) {
         errorResponse(res, error);
     }

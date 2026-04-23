@@ -50,5 +50,11 @@ export const createPostCard = (post, options = {}) => {
             </a>
         `;
 
+    const carouselContainer = column.querySelector(".carousel-container");
+
+    if (carouselContainer) {
+        carouselContainer.dataset.images = JSON.stringify(Array.isArray(post.images) ? post.images : []);
+    }
+
     return column;
 };
