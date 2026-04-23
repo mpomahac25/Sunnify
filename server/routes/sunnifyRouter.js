@@ -5,6 +5,12 @@
 const express = require("express");
 const { query } = require("../helpers/db.js");
 const { encryptPassword, verifyPassword } = require("../helpers/pwEncrypt.js");
+const { supabase } = require("../helpers/supabase.js");
+const multer = require("multer");
+
+const upload = multer({
+    storage: multer.memoryStorage()
+});
 
 const sunnifyRouter = express.Router();
 
@@ -209,6 +215,46 @@ sunnifyRouter.get("/post-conditions", async (req, res) => {
     } catch (error) {
         errorResponse(res, error);
     }
+});
+
+sunnifyRouter.post("/upload-image", upload.single("image"), async (req, res) => {
+    try{
+        if (!req.file) {
+            return res.status(400).json({ error: "No file uploaded" });
+        }
+
+        const file = req.file;
+        const extension = file.mimetype.split("/")[1] || "jpg";
+        const safeFileName = `${Date.now()}-${Math.random().toString(36).slice(2)}.${extension}`;
+        const filePath = safeFileName;
+        //const { error } = await supabase.storage.from(process.env.SUPABASE_BUCKET).getPublicUrl(filePath);
+
+        const { error: uploadError } = await supabase.storage.from(process.env.SUPABASE_BUCKET).upload(filePath, file.buffer, {
+            contentType: file.mimetype,
+            upsert: false
+        });
+
+        if (uploadError) {
+            return res.status(500).json({ error: uploadError.message });
+        }
+
+        const { data, error: signedUrlError } = await supabase.storage
+        .from(process.env.SUPABASE_BUCKET)
+        .createSignedUrl(filePath, 60 * 60 * 24 * 365);
+
+        if (signedUrlError) {
+            return res.status(500).json({ error: signedUrlError.message });
+        }
+
+        if (!req.file.mimetype.startsWith("image/")) {
+            return res.status(400).json({ error: "Only image files are allowed" });
+        }
+
+        return res.status(200).json({ imageUrl: data.publicUrl, filePath })
+    } catch (error) {
+        errorResponse(res, error);
+    }
+
 });
 
 // POST /posts

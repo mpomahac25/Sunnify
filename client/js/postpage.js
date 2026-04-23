@@ -42,7 +42,7 @@
     });
 
     // renderPost(post): populate DOM elements with the post's data.
-    const renderPost = (post) => {
+    const renderPost = async (post) => {
         setText("post-title", post.title);
         setText("post-price", formatPrice(post.price));
         setText("post-category", post.category);
@@ -59,6 +59,18 @@
         setText("seller-name", post.seller_username || "Seller");
         setText("seller-items-sold", post.seller_posts_count + " items listed");
         setText("seller-member-since", formatMemberSince(post.seller_created_at));
+
+        const carouselContainer = document.querySelector(".carousel-container")
+
+        if (carouselContainer) {
+            carouselContainer.dataset.images = JSON.stringify(
+                Array.isArray(post.images) ? post.images : []
+            );
+        }
+
+        if (typeof window.loadCarousels === "function") {
+            await window.loadCarousels();
+        }
 
         // Add behavior to the "Contact seller" button: redirect to the chat page
         // and include the `sellerId` in the query string so the chat can open/create the appropriate conversation.

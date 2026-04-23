@@ -13,12 +13,14 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
+    "@supabase/supabase-js": "^2.104.0",
     "argon2": "^0.44.0",
     "concurrently": "^9.2.1",
     "cors": "^2.8.6",
     "dotenv": "^17.3.1",
     "express": "^5.2.1",
     "express-session": "^1.19.0",
+    "multer": "^2.1.1",
     "nodemon": "^3.1.14",
     "pg": "^8.20.0",
     "serve-index": "^1.9.2"

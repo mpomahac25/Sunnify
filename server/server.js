@@ -11,6 +11,13 @@ const { sunnifyRouter } = require("./routes/sunnifyRouter.js");
 const app = express();
 const client = path.join(__dirname, "..", "client");
 
+const { createClient } = require("@supabase/supabase-js")
+
+const supabase = createClient(
+    process.env.SUPABASE_URL,
+    process.env.SUPABASE_SERVICE_ROLE_KEY
+)
+
 app.use(cors());
 
 app.use(express.json());

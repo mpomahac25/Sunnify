@@ -40,6 +40,12 @@ import { getSelectedCategory, setSelectedCategory, clearSelectedCategory, markCa
         form.addEventListener("submit", async (event) => {
             event.preventDefault();
 
+            const imageInputs = document.querySelectorAll(".image-url-input");
+
+            const images = Array.from(imageInputs).map(input => input.value.trim()).filter(Boolean)
+
+            const files = fileInput.files;
+
             // Fetch location selection
             const selectedLocation = getSelectedLocation();
             if (!selectedLocation || selectedLocation.type !== "city") {
@@ -91,7 +97,8 @@ import { getSelectedCategory, setSelectedCategory, clearSelectedCategory, markCa
                 condition,
                 location,
                 category,
-                status: "available"
+                status: "available",
+                images
             };
 
             try {

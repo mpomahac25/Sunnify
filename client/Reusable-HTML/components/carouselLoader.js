@@ -134,8 +134,4 @@
     };
 
     window.loadCarousels = loadCarousels;
-
-    document.addEventListener("DOMContentLoaded", () => {
-        loadCarousels();
-    });
 })();
