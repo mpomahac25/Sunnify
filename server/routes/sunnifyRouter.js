@@ -63,7 +63,7 @@ sunnifyRouter.post("/register", preventAuthAccess, async (req, res) => {
             `INSERT INTO users (username, email, password_hash) 
                 VALUES ($1, $2, $3) 
                 RETURNING id`,
-            [req.body.username, req.body.email, pwEncrypted]
+            [req.body.username, req.body.email, pwEncrypted],
         );
         res.status(200).json({ id: result.rows[0].id });
     } catch (error) {
@@ -181,7 +181,9 @@ sunnifyRouter.get("/categories", async (req, res) => {
         let result = await query("SELECT id, name FROM post_categories ORDER BY id ASC");
         const categories = result.rows;
 
-        result = await query("SELECT id, name, category_id FROM post_subcategories ORDER BY id ASC");
+        result = await query(
+            "SELECT id, name, category_id FROM post_subcategories ORDER BY id ASC",
+        );
         const subcategories = result.rows;
 
         const categoryData = categories.map((category) => ({
@@ -191,8 +193,8 @@ sunnifyRouter.get("/categories", async (req, res) => {
                 .filter((subcategory) => subcategory.category_id === category.id)
                 .map((subcategory) => ({
                     id: subcategory.id,
-                    subcategory: subcategory.name
-                }))
+                    subcategory: subcategory.name,
+                })),
         }));
 
         res.status(200).json(categoryData);
@@ -203,12 +205,14 @@ sunnifyRouter.get("/categories", async (req, res) => {
 
 sunnifyRouter.get("/post-conditions", async (req, res) => {
     try {
-        const result = await query("SELECT id, condition FROM post_condition WHERE id > 0 ORDER BY id ASC");
+        const result = await query(
+            "SELECT id, condition FROM post_condition WHERE id > 0 ORDER BY id ASC",
+        );
         const conditions = result.rows;
 
         const conditionData = conditions.map((condition) => ({
             id: condition.id,
-            condition: condition.condition
+            condition: condition.condition,
         }));
 
         res.status(200).json(conditionData);
@@ -263,7 +267,8 @@ sunnifyRouter.post("/upload-image", upload.single("image"), async (req, res) => 
 // then inserts a new post returning its id.
 sunnifyRouter.post("/posts", isUserAuthenticated, async (req, res) => {
     try {
-        const { title, description, price, location, category, condition, status, images } = req.body;
+        const { title, description, price, location, category, condition, status, images } =
+            req.body;
 
         if (!title || !description || !location || !category || !condition) {
             return res.status(400).json({ error: "Missing required fields" });
@@ -284,8 +289,8 @@ sunnifyRouter.post("/posts", isUserAuthenticated, async (req, res) => {
             condition === "Like new"
                 ? "Excellent"
                 : condition === "Used"
-                ? "Acceptable"
-                : condition;
+                  ? "Acceptable"
+                  : condition;
         const normalizedStatus = status
             ? status.charAt(0).toUpperCase() + status.slice(1).toLowerCase()
             : "Available";
@@ -312,7 +317,9 @@ sunnifyRouter.post("/posts", isUserAuthenticated, async (req, res) => {
         const postId = result.rows[0].id;
 
         const imageUrls = Array.isArray(images)
-            ? images.map((imageUrl) => typeof imageUrl === "string" ? imageUrl.trim() : "").filter(Boolean)
+            ? images
+                  .map((imageUrl) => (typeof imageUrl === "string" ? imageUrl.trim() : ""))
+                  .filter(Boolean)
             : [];
 
         for (const imageUrl of imageUrls) {
@@ -399,21 +406,24 @@ sunnifyRouter.get("/posts", async (req, res) => {
         );
 
         const posts = postsResult.rows;
-        const postIds = posts.map(p => p.id);
+        const postIds = posts.map((p) => p.id);
 
-        const imagesResult = await query(`
+        const imagesResult = await query(
+            `
         SELECT id, post_id, image_url
         FROM post_images
         WHERE post_id = ANY($1)
         ORDER BY id ASC
-        `, [postIds]);
+        `,
+            [postIds],
+        );
         const imagesByPostId = {};
         for (const img of imagesResult.rows) {
-        if (!imagesByPostId[img.post_id]) imagesByPostId[img.post_id] = [];
-        imagesByPostId[img.post_id].push(img);
+            if (!imagesByPostId[img.post_id]) imagesByPostId[img.post_id] = [];
+            imagesByPostId[img.post_id].push(img);
         }
         for (const post of posts) {
-        post.images = imagesByPostId[post.id] || [];
+            post.images = imagesByPostId[post.id] || [];
         }
 
         res.status(200).json(posts);
@@ -499,7 +509,8 @@ sunnifyRouter.patch("/posts/:id", isUserAuthenticated, async (req, res) => {
             return res.status(403).json({ error: "Post is not yours" });
         }
 
-        const { title, description, price, location, category, condition, status, images } = req.body;
+        const { title, description, price, location, category, condition, status, images } =
+            req.body;
 
         console.log("PATCH /posts payload:", {
             id,
@@ -510,7 +521,7 @@ sunnifyRouter.patch("/posts/:id", isUserAuthenticated, async (req, res) => {
             category,
             condition,
             status,
-            sessionUserId: req.session.userId
+            sessionUserId: req.session.userId,
         });
 
         if (!title || !description || !location || !category || !condition) {
@@ -519,20 +530,20 @@ sunnifyRouter.patch("/posts/:id", isUserAuthenticated, async (req, res) => {
 
         const parsedPrice = Number(price);
 
-        if (Number.isNaN(parsedPrice) || parsedPrice < 0){
-            return res.status(400).json({ error: "Invalid price" })
+        if (Number.isNaN(parsedPrice) || parsedPrice < 0) {
+            return res.status(400).json({ error: "Invalid price" });
         }
 
         const normalizedCity = location.split(",")[0].trim();
         const normalizedCategory = category === "Clothing" ? "Clothes" : category;
-        const normalizedCondition = 
+        const normalizedCondition =
             condition === "Like new"
-            ? "Excellent"
-            : condition === "Used"
-            ? "Acceptable"
-            : condition;
+                ? "Excellent"
+                : condition === "Used"
+                  ? "Acceptable"
+                  : condition;
 
-        const normalizedStatus = status 
+        const normalizedStatus = status
             ? status.charAt(0).toUpperCase() + status.slice(1).toLowerCase()
             : "Available";
 
@@ -551,7 +562,7 @@ sunnifyRouter.patch("/posts/:id", isUserAuthenticated, async (req, res) => {
             WHERE id = $8
             RETURNING id
             `,
-            [ 
+            [
                 title,
                 description,
                 parsedPrice,
@@ -559,8 +570,8 @@ sunnifyRouter.patch("/posts/:id", isUserAuthenticated, async (req, res) => {
                 normalizedCategory,
                 normalizedCondition,
                 normalizedStatus,
-                id
-            ]
+                id,
+            ],
         );
 
         if (Array.isArray(images)) {
@@ -573,7 +584,8 @@ sunnifyRouter.patch("/posts/:id", isUserAuthenticated, async (req, res) => {
             );
 
             const imageUrls = images
-                .map((imageUrl) => typeof imageUrl === "string" ? imageUrl.trim() : "").filter(Boolean);
+                .map((imageUrl) => (typeof imageUrl === "string" ? imageUrl.trim() : ""))
+                .filter(Boolean);
 
             for (const imageUrl of imageUrls) {
                 await query(
@@ -683,7 +695,8 @@ sunnifyRouter.post("/search-results", async (req, res) => {
 
         // Helper function for checking and adding param
         const checkAndAddParam = (sqlColumn, comparator, filterVar) => {
-            if (filterVar !== null) filterConditions.push(`${sqlColumn} ${comparator} ${addParam(filterVar)}`);
+            if (filterVar !== null)
+                filterConditions.push(`${sqlColumn} ${comparator} ${addParam(filterVar)}`);
         };
 
         // Location filter
@@ -692,11 +705,15 @@ sunnifyRouter.post("/search-results", async (req, res) => {
             const locationId = searchObject.location.id;
 
             const tableForLocationLookup =
-                locationType === "city" ? "posts" :
-                    locationType === "region" ? "cities" :
-                        "regions";
+                locationType === "city"
+                    ? "posts"
+                    : locationType === "region"
+                      ? "cities"
+                      : "regions";
 
-            filterConditions.push(`${tableForLocationLookup}.${locationType}_id = ${addParam(locationId)}`);
+            filterConditions.push(
+                `${tableForLocationLookup}.${locationType}_id = ${addParam(locationId)}`,
+            );
         }
 
         // Category filters
@@ -711,7 +728,7 @@ sunnifyRouter.post("/search-results", async (req, res) => {
         checkAndAddParam("posts.price", "<=", searchObject.filters.priceMax);
 
         // Title and description loose SQL filtering -> only 1 search token needs to match a word in title or description
-        searchObject.searchTermsTokens.forEach(token => {
+        searchObject.searchTermsTokens.forEach((token) => {
             const likeToken = `%${token}%`;
             filterConditions.push(`
                 (
@@ -755,16 +772,21 @@ sunnifyRouter.post("/search-results", async (req, res) => {
 
             JOIN post_condition ON post_condition.id = posts.condition
         `;
-        const whereClause = filterConditions.length > 0 ? `WHERE ${filterConditions.join(" AND ")}` : "";
+        const whereClause =
+            filterConditions.length > 0 ? `WHERE ${filterConditions.join(" AND ")}` : "";
 
         // Sorting clause
         const sortType = searchObject.sortType;
         const sortClause =
-            sortType === "newest" ? "ORDER BY posts.created_at DESC" :
-                sortType === "oldest" ? "ORDER BY posts.created_at ASC" :
-                    sortType === "price-asc" ? "ORDER BY posts.price ASC" :
-                        sortType === "price-desc" ? "ORDER BY posts.price DESC" :
-                            "";
+            sortType === "newest"
+                ? "ORDER BY posts.created_at DESC"
+                : sortType === "oldest"
+                  ? "ORDER BY posts.created_at ASC"
+                  : sortType === "price-asc"
+                    ? "ORDER BY posts.price ASC"
+                    : sortType === "price-desc"
+                      ? "ORDER BY posts.price DESC"
+                      : "";
 
         // Build SQL query
         const sql = `${selectClause} ${fromAndJoinClause} ${whereClause} ${sortClause}`;
@@ -779,7 +801,7 @@ sunnifyRouter.post("/search-results", async (req, res) => {
         return res.status(200).json({
             searchObject,
             posts: filteredPosts,
-            totalCount: filteredPosts.length
+            totalCount: filteredPosts.length,
         });
     } catch (error) {
         errorResponse(res, error);
@@ -790,20 +812,20 @@ sunnifyRouter.post("/search-results", async (req, res) => {
 
 // Get all conversations where the user is participating
 sunnifyRouter.get("/conversations", isUserAuthenticated, async (req, res) => {
-    try{
-    const sessionUser = req.session.userId;
-    
-    // Search for all the conversations where the user is participating 
-    const result = await query (
-        `SELECT * FROM conversations
+    try {
+        const sessionUser = req.session.userId;
+
+        // Search for all the conversations where the user is participating
+        const result = await query(
+            `SELECT * FROM conversations
             WHERE user1_id = $1 OR user2_id = $1
             ORDER BY id DESC`,
-            [sessionUser]
-    );
+            [sessionUser],
+        );
 
-    // Return the array of conversations with status 200 (OK)
-    return res.status(200).json({ conversations: result.rows });
-    } catch(error){
+        // Return the array of conversations with status 200 (OK)
+        return res.status(200).json({ conversations: result.rows });
+    } catch (error) {
         errorResponse(res, error);
     }
 });
@@ -824,9 +846,11 @@ sunnifyRouter.post("/conversation/check-or-create", isUserAuthenticated, async (
             return res.status(400).json({ error: "Invalid user ids or post id" });
         }
 
-        // Validation: only can create the conversation if the logged user is one of the 2 
+        // Validation: only can create the conversation if the logged user is one of the 2
         if (sessionUser !== user1 && sessionUser !== user2) {
-            return res.status(403).json({ error: "Forbidden: session user not part of this conversation" });
+            return res
+                .status(403)
+                .json({ error: "Forbidden: session user not part of this conversation" });
         }
 
         // Check if the conversation already exists between 2 users (in whatever order)
@@ -846,7 +870,7 @@ sunnifyRouter.post("/conversation/check-or-create", isUserAuthenticated, async (
         // If it doesn't exist, create the conversation and return the new id
         const insertResult = await query(
             `INSERT INTO conversations (user1_id, user2_id, post_id) VALUES ($1, $2, $3) RETURNING id`,
-            [user1, user2, postId]
+            [user1, user2, postId],
         );
 
         return res.status(201).json({ conversationId: insertResult.rows[0].id });
@@ -859,96 +883,94 @@ sunnifyRouter.post("/conversation/check-or-create", isUserAuthenticated, async (
 sunnifyRouter.get("/conversations/:id/messages", isUserAuthenticated, async (req, res) => {
     // Start try/catch to capture error and prevent the server from crashing
     try {
-    // Take the conversation id and the authenticated user
-    const conversationID = Number(req.params.id);
-    const sessionUser = req.session.userId;
+        // Take the conversation id and the authenticated user
+        const conversationID = Number(req.params.id);
+        const sessionUser = req.session.userId;
 
-    // Validate the conversation id is a number
-    if(Number.isNaN(conversationID) ){
-        return res.status(400).json({error: "Invalid conversation id"});
-    }
+        // Validate the conversation id is a number
+        if (Number.isNaN(conversationID)) {
+            return res.status(400).json({ error: "Invalid conversation id" });
+        }
 
-    // Searches for the conversation in the database
-    const convResult = await query(
-        `SELECT * FROM conversations WHERE id = $1`,
-            [conversationID],
-    );
-    if (convResult.rows.length === 0) {
-        return res.status(404).json({ error: "Conversation not found"});
-    }
-    const conversation = convResult.rows[0];
+        // Searches for the conversation in the database
+        const convResult = await query(`SELECT * FROM conversations WHERE id = $1`, [
+            conversationID,
+        ]);
+        if (convResult.rows.length === 0) {
+            return res.status(404).json({ error: "Conversation not found" });
+        }
+        const conversation = convResult.rows[0];
 
-    // Checks that the user is part of the conversation (either user1 or user2)
-    if (sessionUser !== conversation.user1_id && sessionUser !== conversation.user2_id){
-        return res.status(403).json({ error: "Forbidden: user not part of this conversation" });
-    }
+        // Checks that the user is part of the conversation (either user1 or user2)
+        if (sessionUser !== conversation.user1_id && sessionUser !== conversation.user2_id) {
+            return res.status(403).json({ error: "Forbidden: user not part of this conversation" });
+        }
 
-    // Consults the messages of the conversation and returns them ordered by sent_at
-    const messagesFromConv = await query (
-        `SELECT * FROM messages
+        // Consults the messages of the conversation and returns them ordered by sent_at
+        const messagesFromConv = await query(
+            `SELECT * FROM messages
         WHERE conversation_id = $1
         ORDER BY sent_at ASC`,
-        [conversationID]
-    );
-    // Returns the messages in JSON format with status 200 (OK)
-    return res.status(200).json({ messages: messagesFromConv.rows });
-    }   // If any error happens, catch it and return a 500 response with the error message 
-        catch(error) {
-            errorResponse(res, error);
+            [conversationID],
+        );
+        // Returns the messages in JSON format with status 200 (OK)
+        return res.status(200).json({ messages: messagesFromConv.rows });
+    } catch (error) {
+        // If any error happens, catch it and return a 500 response with the error message
+        errorResponse(res, error);
     }
 });
 
 // Send a message in a conversation, only if the logged user is part of the conversation (user1 or user2)
 sunnifyRouter.post("/conversations/:id/messages", isUserAuthenticated, async (req, res) => {
-    try{
+    try {
         const conversationID = Number(req.params.id);
         const sessionUser = req.session.userId;
 
         // Validate id
-        if(Number.isNaN(conversationID)){
-            return res.status(400).json({error: "Invalid conversation id"});
+        if (Number.isNaN(conversationID)) {
+            return res.status(400).json({ error: "Invalid conversation id" });
         }
 
         // Validate text
         const msgText = req.body.text;
         // Check that the text is not empty or just spaces
-        if(!msgText || !msgText.trim()) {
-            return res.status(400).json({error: "Message can't be empty"});
+        if (!msgText || !msgText.trim()) {
+            return res.status(400).json({ error: "Message can't be empty" });
         }
 
         // Search for the conversation
-        const convResult = await query (
-            `SELECT* from conversations WHERE id = $1`,
-                [conversationID]
-        )
-        if(convResult.rows.length === 0) {
-            return res.status(404).json({error: "Conversation not found"});
+        const convResult = await query(`SELECT* from conversations WHERE id = $1`, [
+            conversationID,
+        ]);
+        if (convResult.rows.length === 0) {
+            return res.status(404).json({ error: "Conversation not found" });
         }
         const conversation = convResult.rows[0];
 
         // Verify that the authenticated user is participan of the conversation
-        if (sessionUser !== conversation.user1_id && sessionUser !== conversation.user2_id){
-            return res.status(403).json({error: "User is not part of this conversation"});
+        if (sessionUser !== conversation.user1_id && sessionUser !== conversation.user2_id) {
+            return res.status(403).json({ error: "User is not part of this conversation" });
         }
 
         // Determine the receiver id (the other user in the conversation
         // Ternary operator if the session user is user1, then the receiver is user2, otherwise the receiver is user1
-        const receiverId = (sessionUser === conversation.user1_id)
-            ? conversation.user2_id     // If TRUE: use user2_id
-            : conversation.user1_id;    // If FALSE: use user1_id
+        const receiverId =
+            sessionUser === conversation.user1_id
+                ? conversation.user2_id // If TRUE: use user2_id
+                : conversation.user1_id; // If FALSE: use user1_id
 
         // Insert the message
         const insertResult = await query(
-        `INSERT INTO messages (conversation_id, sender_id, receiver_id, content, sent_at)
+            `INSERT INTO messages (conversation_id, sender_id, receiver_id, content, sent_at)
         VALUES ($1, $2, $3, $4, NOW())
         RETURNING *`,
-        [conversationID, sessionUser, receiverId, msgText]
+            [conversationID, sessionUser, receiverId, msgText],
         );
-        
-        // Return the inserted messages
-        return res.status(201).json({ message: insertResult.rows[0]});
 
-    } catch (error){
+        // Return the inserted messages
+        return res.status(201).json({ message: insertResult.rows[0] });
+    } catch (error) {
         errorResponse(res, error);
     }
 });
@@ -962,8 +984,8 @@ sunnifyRouter.delete("/conversations", isUserAuthenticated, async (req, res) => 
         if (!Array.isArray(conversationIds) || conversationIds.length === 0) {
             return res.status(400).json({ error: "No conversations selected" });
         }
-        
-        if (!conversationIds.every(id => Number.isInteger(id) && id > 0)) {
+
+        if (!conversationIds.every((id) => Number.isInteger(id) && id > 0)) {
             return res.status(400).json({ error: "Invalid conversation IDs" });
         }
         // Delete only conversations where the user is a participant
@@ -972,7 +994,7 @@ sunnifyRouter.delete("/conversations", isUserAuthenticated, async (req, res) => 
                 WHERE id = ANY($1)
                 AND (user1_id = $2 OR user2_id = $2)
                 RETURNING id`,
-            [conversationIds, userId]
+            [conversationIds, userId],
         );
         res.status(200).json({ message: "Conversations deleted", deleted: result.rows.length });
     } catch (error) {
@@ -981,6 +1003,45 @@ sunnifyRouter.delete("/conversations", isUserAuthenticated, async (req, res) => 
 });
 
 // End of Chat System: Conversations & Messages
+
+// Categories
+sunnifyRouter.get("/categories", async (req, res) => {
+    try {
+        let result = await query("SELECT id, name FROM post_categories ORDER BY id ASC");
+        const categories = result.rows;
+
+        result = await query(
+            "SELECT id, name, category_id FROM post_subcategories ORDER BY id ASC",
+        );
+        const subcategories = result.rows;
+
+        const categoryData = categories.map((category) => ({
+            id: category.id,
+            category: category.name,
+            subcategories: subcategories
+                .filter((subcategory) => subcategory.category_id === category.id)
+                .map((subcategory) => ({
+                    id: subcategory.id,
+                    subcategory: subcategory.name,
+                })),
+        }));
+        
+        // Example: categoriesList = [{id: 1, name: "Clothes"}, ...]
+        function getCategoryIdByName(name) {
+            const cat = categoriesList.find((c) => c.name === name);
+            return cat ? cat.id : "";
+        }
+
+        // When building the search object:
+        const urlCategory = urlParams.get("category");
+        const categoryId =
+            urlParams.get("categoryId") || (urlCategory ? getCategoryIdByName(urlCategory) : "");
+
+        res.status(200).json(categoryData);
+    } catch (error) {
+        errorResponse(res, error);
+    }
+});
 
 // Convenience and helper functions
 const errorResponse = (res, error) => {
@@ -995,9 +1056,7 @@ const normalizeText = (value) => {
 };
 
 const normalizeSearchText = (rawText) => {
-    return normalizeText(rawText)
-        .toLowerCase()
-        .replace(/\s+/g, " ");
+    return normalizeText(rawText).toLowerCase().replace(/\s+/g, " ");
 };
 
 const tokenizeSearchText = (normalizedText) => {
@@ -1006,7 +1065,14 @@ const tokenizeSearchText = (normalizedText) => {
     }
 
     // Split into array of unique search terms, minimum 2 character length
-    return [...new Set(normalizedText.split(" ").filter(Boolean).filter(term => term.length >= 2))];
+    return [
+        ...new Set(
+            normalizedText
+                .split(" ")
+                .filter(Boolean)
+                .filter((term) => term.length >= 2),
+        ),
+    ];
 };
 
 const normalizeInteger = (value) => {
@@ -1039,21 +1105,22 @@ const buildSearchObject = (rawRequest = {}) => {
         searchTermsRaw,
         searchTermsNormalized,
         searchTermsTokens,
-        location: locationType && locationId
-            ? {
-                name: normalizeText(rawRequest.locationName),
-                type: locationType,
-                id: locationId
-            }
-            : null,
+        location:
+            locationType && locationId
+                ? {
+                      name: normalizeText(rawRequest.locationName),
+                      type: locationType,
+                      id: locationId,
+                  }
+                : null,
         sortType: normalizeText(rawRequest.sortType) || "relevance",
         filters: {
             categoryId: normalizeInteger(rawRequest.filters?.categoryId),
             subcategoryId: normalizeInteger(rawRequest.filters?.subcategoryId),
             conditionId: normalizeInteger(rawRequest.filters?.conditionId),
             priceMin: normalizeNumber(rawRequest.filters?.priceMin),
-            priceMax: normalizeNumber(rawRequest.filters?.priceMax)
-        }
+            priceMax: normalizeNumber(rawRequest.filters?.priceMax),
+        },
     };
 };
 
@@ -1073,7 +1140,7 @@ const filterAndSortPostsByRelevancy = (postsFromDb, searchObject) => {
 
     // Create array of post objects with relevancy score
     const scoredPosts = postsFromDb
-        .map(post => {
+        .map((post) => {
             const title = normalizeSearchText(post.title);
             const description = normalizeSearchText(post.description);
 
@@ -1087,7 +1154,7 @@ const filterAndSortPostsByRelevancy = (postsFromDb, searchObject) => {
             }
 
             // Token matching
-            tokens.forEach(token => {
+            tokens.forEach((token) => {
                 let tokenMatched = false;
 
                 if (title.includes(token)) {
@@ -1118,10 +1185,10 @@ const filterAndSortPostsByRelevancy = (postsFromDb, searchObject) => {
             return {
                 ...post,
                 relevanceScore: score,
-                matchedTokenCount
+                matchedTokenCount,
             };
         })
-        .filter(post => post.relevanceScore > 0);
+        .filter((post) => post.relevanceScore > 0);
 
     // Sorting not requested, return just filtered
     if (!doSorting) {
