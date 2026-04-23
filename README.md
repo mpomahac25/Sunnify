@@ -163,6 +163,10 @@ DB_NAME=<db_name>
 DB_USER=<db_user>
 DB_PASSWORD=<db_password>
 SSL=true
+
+SUPABASE_URL=<supabase_project_url>
+SUPABASE_SERVICE_ROLE_KEY=<supabase_service_role_key>
+SUPABASE_BUCKET=<supabase_image_bucket>
 ```
 
 **Never commit your real `.env` file or any secret keys to version control.**
@@ -173,6 +177,7 @@ The repository has the following structure.
 ```tree
 Sunnify/
 |	.gitignore
+|	LICENSE
 |	README.md
 |
 ├──	client/		#Frontend
