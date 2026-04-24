@@ -50,7 +50,7 @@
         <section class="py-5">
             <div class="container">
                 <div class="row g-4">
-                    <div class="col-12 col-lg-8">
+                    <div class="col-12 col-lg-8 mx-auto">
                         <div class="card border-0 shadow-sm createpost-form-card">
                             <div class="card-body p-4 p-md-5">
                                 <div class="d-flex justify-content-between align-items-center mb-4">
@@ -63,29 +63,29 @@
 
                                 <form class="row g-4">
                                     <div class="col-12">
-                                        <label for="listing-title" class="form-label fw-semibold">Title</label>
+                                        <label for="listing-title" class="form-label fw-semibold">Title*</label>
                                         <input id="listing-title" type="text" name="title" class="form-control form-control-lg" placeholder="e.g. Cool fishing rod">
                                     </div>
 
                                     <div class="col-12">
-                                        <label for="listing-description" class="form-label fw-semibold">Description</label>
+                                        <label for="listing-description" class="form-label fw-semibold">Description*</label>
                                         <textarea id="listing-description" name="description" class="form-control createpost-textarea" placeholder="Describe condition, size, pickup details, and anything helpful for the buyer."></textarea>
                                     </div>
 
                                     <div class="col-12 col-md-6">
-                                        <label for="listing-price" class="form-label fw-semibold">Price</label>
+                                        <label for="listing-price" class="form-label fw-semibold">Price*</label>
                                         <div class="input-group input-group-lg">
                                             <input id="listing-price" type="text" name="price" class="form-control" placeholder="25">
                                             <span class="input-group-text">EUR</span>
                                         </div>
                                     </div>
 
+                                    <div id="smart-location-dropdown-container" class="col-12 col-md-6 position-relative">
+                                        <label for="listing-location" class="form-label fw-semibold">Location*</label>
+                                    </div>
+                                    
                                     <div id="condition-dropdown-container" class="col-12 col-md-6 position-relative">
                                         <label for="listing-condition" class="form-label fw-semibold">Condition</label>
-                                    </div>
-
-                                    <div id="smart-location-dropdown-container" class="col-12 col-md-6 position-relative">
-                                        <label for="listing-location" class="form-label fw-semibold">Location</label>
                                     </div>
 
                                     <div id="smart-category-dropdown-container" class="col-12 col-md-6 position-relative">
@@ -95,12 +95,13 @@
                                     <div class="col-12">
                                         <label class="form-label fw-semibold">Images</label>
                                         <div class="row g-3">
-                                            <div class="col-12 col-sm-4">
-                                                <input type="file" id="listing-images" accept="image/*" class="form-label" multiple>
+                                            <div class="col-12">
+                                                <label for="listing-images" class="upload-box">
                                                     <i class="bi bi-image fs-3"></i>
                                                     <span>Add photo</span>
-                                                    
-                                            <div id="image-preview" class="d-flex flex-wrap gap-2"></div>
+                                                </label>
+                                                <input type="file" id="listing-images" accept="image/*" multiple hidden>
+                                                <div id="image-preview" class="d-flex flex-wrap gap-2 mt-3"></div>
                                             </div>
                                         </div>
                                     </div>
@@ -116,7 +117,7 @@
                         </div>
                     </div>
 
-                    <div class="col-12 col-lg-4">
+                    <div class="col-12 col-lg-4 d-none">
                         <div class="card border-0 shadow-sm h-100 createpost-preview-card">
                             <div class="card-body p-4">
                                 <h2 class="h5 mb-3">Preview vibe</h2>

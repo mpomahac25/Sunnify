@@ -281,7 +281,7 @@ sunnifyRouter.post("/posts", isUserAuthenticated, async (req, res) => {
         const { title, description, price, location, categoryId, subcategoryId, condition, status, images } =
             req.body;
 
-        if (!title || !description || !location || !categoryId || !condition) {
+        if (title === undefined || description === undefined || price === undefined || condition === undefined || categoryId === undefined) {
             return res.status(400).json({ error: "Missing required fields" });
         }
 

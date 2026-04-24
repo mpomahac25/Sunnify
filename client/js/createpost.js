@@ -38,11 +38,67 @@ import { getSelectedCategory, clearSelectedCategory, markCategoryInvalid, clearC
             return;
         }
 
+        // handle image preview display
+        const imagePreviewContainer = document.getElementById("image-preview");
+        let selectedFiles = [];
+        
+        // function to render all preview images
+        const renderPreviews = () => {
+            imagePreviewContainer.innerHTML = "";
+
+            selectedFiles.forEach((file, index) => {
+                // reader for every img
+                const reader = new FileReader();
+                
+                reader.onload = (e) => {
+                    const imgWrapper = document.createElement("div");
+                    imgWrapper.className = "image-preview-item";
+                    
+                    const img = document.createElement("img");
+                    img.src = e.target.result;
+                    img.className = "image-preview-img";
+                    
+                    const removeBtn = document.createElement("button");
+                    removeBtn.type = "button";
+                    removeBtn.innerHTML = '<i class="bi bi-x"></i>';
+                    removeBtn.className = "btn btn-danger btn-sm position-absolute top-0 start-100 translate-middle rounded-circle p-0 image-remove-btn";
+                    
+                    removeBtn.addEventListener("click", (e) => {
+                        e.preventDefault();
+                        selectedFiles.splice(index, 1);
+                        imagesField.value = "";
+                        renderPreviews();
+                    });
+                    
+                    imgWrapper.appendChild(img);
+                    imgWrapper.appendChild(removeBtn);
+                    imagePreviewContainer.appendChild(imgWrapper);
+                };
+                
+                reader.readAsDataURL(file);
+            });
+        };
+        
+        imagesField.addEventListener("change", (event) => {
+            const newFiles = Array.from(event.target.files || []);
+            
+            // add new files to existing selection (combines two arrays into a single one)
+            selectedFiles = [...selectedFiles, ...newFiles];
+            
+            if (selectedFiles.length > 10) {
+                alert("Maximum 10 images allowed");
+                selectedFiles = selectedFiles.slice(0, 10);
+            }
+            
+            renderPreviews();
+            imagesField.value = "";
+        });
+
         // when publish btn clicked
         form.addEventListener("submit", async (event) => {
             event.preventDefault();
-            // takes images from field
-            const files = Array.from(imagesField.files || []);
+            // takes images from accumulated selection, not from field
+            const files = selectedFiles;
 
             if (files.length > 10) {
                 alert("Maximum 10 images allowed");
@@ -87,18 +143,14 @@ import { getSelectedCategory, clearSelectedCategory, markCategoryInvalid, clearC
             // Fetch category selection
             const selectedCategory = getSelectedCategory();
             if (!getSelectedCategory()) {
-                markCategoryInvalid();
-                return;
+                clearCategoryInvalid();
             }
-            clearCategoryInvalid();
 
             // Fetch condition selection
             const selectedCondition = getSelectedCondition();
             if (!getSelectedCondition()) {
-                markConditionInvalid();
-                return;
+                clearConditionInvalid();
             }
-            clearConditionInvalid();
 
             // takes values
             const title = titleField.value.trim();
@@ -106,9 +158,9 @@ import { getSelectedCategory, clearSelectedCategory, markCategoryInvalid, clearC
             const price = priceField.value.trim();
             const location = selectedLocation.name.trim();
             const cityId = selectedLocation.id;
-            const categoryId = selectedCategory.type === "subcategory" ? selectedCategory.categoryId : selectedCategory.id;
-            const subcategoryId = selectedCategory.type === "subcategory" ? selectedCategory.id : 0;
-            const condition = selectedCondition;
+            const categoryId = selectedCategory ? (selectedCategory.type === "subcategory" ? selectedCategory.categoryId : selectedCategory.id) : 0;
+            const subcategoryId = selectedCategory ? (selectedCategory.type === "subcategory" ? selectedCategory.id : 0) : 0;
+            const condition = selectedCondition || 0
 
             //validation
             const validationError = validateForm({
@@ -168,7 +220,7 @@ import { getSelectedCategory, clearSelectedCategory, markCategoryInvalid, clearC
     });
     
     // validation during user creating post
-    const validateForm = ({ title, description, price, condition, location, cityId, category }) => {
+    const validateForm = ({ title, description, price, location, cityId }) => {
         if (!title) {
             return "Title is required.";
         }
@@ -187,16 +239,8 @@ import { getSelectedCategory, clearSelectedCategory, markCategoryInvalid, clearC
             return "Price must be a valid non-negative number.";
         }
 
-        if (!condition || condition === "Choose condition") {
-            return "Please choose a condition.";
-        }
-
         if (!location || !cityId) {
             return "Please choose a city from the list.";
-        }
-
-        if (!category || category === "Select category") {
-            return "Please choose a category.";
         }
         // if no problems - returns null
         return null;
