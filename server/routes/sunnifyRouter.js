@@ -41,32 +41,33 @@ const preventAuthAccess = (req, res, next) => {
 // Note: additional validation (username/email format, profanity) is TODO.
 sunnifyRouter.post("/register", preventAuthAccess, async (req, res) => {
     try {
-        // Check if user already exists
-        let result = await query("SELECT * FROM users");
-        let rows = result.rows ? result.rows : [];
-
-        if (rows.some((row) => row.username === req.body.username)) {
-            res.status(409).json({ error: "Username already exists!" });
-            return;
-        } else if (rows.some((row) => row.email === req.body.email)) {
-            res.status(409).json({ error: "Email already in use!" });
-            return;
-        }
-
         // TODO: Additional validation of username and email (e.g. profanity filtering)
 
         // Encrypt password
         const pwEncrypted = await encryptPassword(req.body.password);
 
-        // Create new user in database
+        // Attempt to create new user in database; rely on UNIQUE constraint violations for validation
         result = await query(
             `INSERT INTO users (username, email, password_hash) 
                 VALUES ($1, $2, $3) 
                 RETURNING id`,
             [req.body.username, req.body.email, pwEncrypted],
         );
-        res.status(200).json({ id: result.rows[0].id });
+        
+        res.status(201).json({ id: result.rows[0].id });
     } catch (error) {
+        // Postgres "UNIQUE constraint violation" code
+        if (error.code === "23505") {
+            if (error.constraint?.includes("username")) {
+                return res.status(409).json({ error: "Username already exists!" });
+            }
+            if (error.constraint?.includes("email")) {
+                return res.status(409).json({ error: "Email already in use!" });
+            }
+            return res.status(409).json({ error: "Username or email already in use!" });
+        }
+
+        // Other error
         errorResponse(res, error);
     }
 });
