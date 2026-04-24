@@ -1,6 +1,6 @@
 import { getSelectedLocation, getTypedLocationValue, markLocationInvalid, clearLocationInvalid } from "../Reusable-HTML/components/smartLocationDropdown.js";
-import { getSelectedCondition, setSelectedCondition, clearSelectedCondition, markConditionInvalid, clearConditionInvalid } from "./Reusable-HTML/components/conditionDropdown.js";
-import { getSelectedCategory, setSelectedCategory, clearSelectedCategory, markCategoryInvalid, clearCategoryInvalid } from "./Reusable-HTML/components/smartCategoryDropdown.js";
+import { getSelectedCondition, clearSelectedCondition, markConditionInvalid, clearConditionInvalid } from "../Reusable-HTML/components/conditionDropdown.js";
+import { getSelectedCategory, clearSelectedCategory, markCategoryInvalid, clearCategoryInvalid } from "../Reusable-HTML/components/smartCategoryDropdown.js";
 
 (() => {
 
@@ -12,6 +12,7 @@ import { getSelectedCategory, setSelectedCategory, clearSelectedCategory, markCa
         const priceField = document.getElementById("listing-price");
         const conditionField = document.getElementById("listing-condition");
         const categoryField = document.getElementById("listing-category");
+        const imagesField = document.getElementById("listing-images");
 
         if (!form) {
             return;
@@ -26,6 +27,7 @@ import { getSelectedCategory, setSelectedCategory, clearSelectedCategory, markCa
 
             const sessionResult = await sessionResponse.json();
 
+            // if not logged in redirects to login page
             if (!sessionResult.loggedIn) {
                 window.location.href = "login.html";
                 return;
@@ -39,12 +41,41 @@ import { getSelectedCategory, setSelectedCategory, clearSelectedCategory, markCa
         // when publish btn clicked
         form.addEventListener("submit", async (event) => {
             event.preventDefault();
+            // takes images from field
+            const files = Array.from(imagesField.files || []);
 
-            const imageInputs = document.querySelectorAll(".image-url-input");
+            if (files.length > 10) {
+                alert("Maximum 10 images allowed");
+                return;
+            }
 
-            const images = Array.from(imageInputs).map(input => input.value.trim()).filter(Boolean)
+            if (files.length === 0) {
+                alert("Please select at least 1 image")
+                return;
+            }
+            
+            const uploadedImageUrls = [];
 
-            const files = fileInput.files;
+            // loads all images
+            for (const file of files) {
+                const formData = new FormData();
+                formData.append("image", file);
+
+                const uploadResponse = await fetch("/upload-image", {
+                    method: "POST",
+                    credentials: "include",
+                    body: formData
+                })
+
+                const uploadResult = await uploadResponse.json();
+
+                if (!uploadResponse.ok) {
+                    alert(uploadResult.error || "Image upload failed");
+                    return;
+                }
+
+                uploadedImageUrls.push(uploadResult.imageUrl);
+            }
 
             // Fetch location selection
             const selectedLocation = getSelectedLocation();
@@ -52,26 +83,32 @@ import { getSelectedCategory, setSelectedCategory, clearSelectedCategory, markCa
                 alert("Location selection must be a city, it cannot be a country or region");
                 return;
             }
-            
+
+            // Fetch category selection
             const selectedCategory = getSelectedCategory();
             if (!getSelectedCategory()) {
                 markCategoryInvalid();
-                return false;
+                return;
             }
-            
+            clearCategoryInvalid();
+
+            // Fetch condition selection
             const selectedCondition = getSelectedCondition();
             if (!getSelectedCondition()) {
                 markConditionInvalid();
-                return false;
+                return;
             }
+            clearConditionInvalid();
+
             // takes values
             const title = titleField.value.trim();
             const description = descriptionField.value.trim();
             const price = priceField.value.trim();
             const location = selectedLocation.name.trim();
             const cityId = selectedLocation.id;
-            const category = selectedCategory ? selectedCategory.name : "";
-            const condition = selectedCondition ? selectedCondition.name : "";
+            const categoryId = selectedCategory.type === "subcategory" ? selectedCategory.categoryId : selectedCategory.id;
+            const subcategoryId = selectedCategory.type === "subcategory" ? selectedCategory.id : 0;
+            const condition = selectedCondition;
 
             //validation
             const validationError = validateForm({
@@ -81,7 +118,7 @@ import { getSelectedCategory, setSelectedCategory, clearSelectedCategory, markCa
                 condition,
                 location,
                 cityId,
-                category
+                category: categoryId
             });
 
             if (validationError) {
@@ -96,9 +133,10 @@ import { getSelectedCategory, setSelectedCategory, clearSelectedCategory, markCa
                 price: Number(price),
                 condition,
                 location,
-                category,
+                categoryId,
+                subcategoryId,
                 status: "available",
-                images
+                images: uploadedImageUrls
             };
 
             try {

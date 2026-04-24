@@ -221,40 +221,50 @@ sunnifyRouter.get("/post-conditions", async (req, res) => {
     }
 });
 
-sunnifyRouter.post("/upload-image", upload.single("image"), async (req, res) => {
+sunnifyRouter.post("/upload-image", isUserAuthenticated, upload.single("image"), async (req, res) => {
     try{
+        // checks if file is uploaded
         if (!req.file) {
             return res.status(400).json({ error: "No file uploaded" });
         }
 
         const file = req.file;
+
+        // takes extension from mime type
         const extension = file.mimetype.split("/")[1] || "jpg";
+
+        // generates unique file name to prevent conflicts
         const safeFileName = `${Date.now()}-${Math.random().toString(36).slice(2)}.${extension}`;
         const filePath = safeFileName;
         //const { error } = await supabase.storage.from(process.env.SUPABASE_BUCKET).getPublicUrl(filePath);
 
+        // uploads file to storage
         const { error: uploadError } = await supabase.storage.from(process.env.SUPABASE_BUCKET).upload(filePath, file.buffer, {
             contentType: file.mimetype,
             upsert: false
         });
 
+        // in case of error sends message
         if (uploadError) {
             return res.status(500).json({ error: uploadError.message });
         }
 
+        // creates signed url
         const { data, error: signedUrlError } = await supabase.storage
         .from(process.env.SUPABASE_BUCKET)
-        .createSignedUrl(filePath, 60 * 60 * 24 * 365);
+        .createSignedUrl(filePath, 60 * 60 * 24 * 365); //number of seconds per year, available for 1 year
 
+        // checks for any errors during creating of url
         if (signedUrlError) {
             return res.status(500).json({ error: signedUrlError.message });
         }
 
+        // checks if file is img
         if (!req.file.mimetype.startsWith("image/")) {
             return res.status(400).json({ error: "Only image files are allowed" });
         }
 
-        return res.status(200).json({ imageUrl: data.publicUrl, filePath })
+        return res.status(200).json({ imageUrl: data.signedUrl, filePath })
     } catch (error) {
         errorResponse(res, error);
     }
@@ -267,10 +277,10 @@ sunnifyRouter.post("/upload-image", upload.single("image"), async (req, res) => 
 // then inserts a new post returning its id.
 sunnifyRouter.post("/posts", isUserAuthenticated, async (req, res) => {
     try {
-        const { title, description, price, location, category, condition, status, images } =
+        const { title, description, price, location, categoryId, subcategoryId, condition, status, images } =
             req.body;
 
-        if (!title || !description || !location || !category || !condition) {
+        if (!title || !description || !location || !categoryId || !condition) {
             return res.status(400).json({ error: "Missing required fields" });
         }
 
@@ -284,7 +294,6 @@ sunnifyRouter.post("/posts", isUserAuthenticated, async (req, res) => {
         // Input normalization: convert display values into DB-friendly lookups.
         // Note: the file contains some developer jokes/comments which are preserved here.
         const normalizedCity = location.split(",")[0].trim();
-        const normalizedCategory = category === "Clothing" ? "Clothes" : category;
         const normalizedCondition =
             condition === "Like new"
                 ? "Excellent"
@@ -295,11 +304,11 @@ sunnifyRouter.post("/posts", isUserAuthenticated, async (req, res) => {
             ? status.charAt(0).toUpperCase() + status.slice(1).toLowerCase()
             : "Available";
 
-        // Insert post using `COALESCE((SELECT id ...), 0)` so missing lookups fall back to 0.
+        // Insert post using category_id and subcategory_id directly
         const result = await query(
             `
             INSERT INTO posts (title, description, price, city_id, category_id, subcategory_id, condition, status, user_id)
-            VALUES ($1, $2, $3, COALESCE((SELECT id FROM cities WHERE name = $4), 0), COALESCE((SELECT id FROM post_categories WHERE name = $5), 0), 0, COALESCE((SELECT id FROM post_condition WHERE condition = $6), 0), COALESCE((SELECT id FROM post_status WHERE status = $7), 0), $8)
+            VALUES ($1, $2, $3, COALESCE((SELECT id FROM cities WHERE name = $4), 0), $5, $6, COALESCE((SELECT id FROM post_condition WHERE condition = $7), 0), COALESCE((SELECT id FROM post_status WHERE status = $8), 0), $9)
             RETURNING id
             `,
             [
@@ -307,13 +316,13 @@ sunnifyRouter.post("/posts", isUserAuthenticated, async (req, res) => {
                 description,
                 parsedPrice,
                 normalizedCity,
-                normalizedCategory,
+                categoryId,
+                subcategoryId || 0,
                 normalizedCondition,
                 normalizedStatus,
                 req.session.userId,
             ],
         );
-
         const postId = result.rows[0].id;
 
         const imageUrls = Array.isArray(images)
@@ -321,7 +330,6 @@ sunnifyRouter.post("/posts", isUserAuthenticated, async (req, res) => {
                   .map((imageUrl) => (typeof imageUrl === "string" ? imageUrl.trim() : ""))
                   .filter(Boolean)
             : [];
-
         for (const imageUrl of imageUrls) {
             await query(
                 `
@@ -504,7 +512,7 @@ sunnifyRouter.patch("/posts/:id", isUserAuthenticated, async (req, res) => {
 
         // ownership rule
         const postOwnerId = postResult.rows[0].user_id;
-
+        // checks if post is yours
         if (postOwnerId !== req.session.userId) {
             return res.status(403).json({ error: "Post is not yours" });
         }
