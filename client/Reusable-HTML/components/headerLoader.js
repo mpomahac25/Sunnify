@@ -26,19 +26,9 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         if (result.loggedIn) {
             createPostButton?.classList.remove("d-none");
-            //chatLinkContainer.innerHTML = `
-            //    <a
-            //        href="../page-examples/chatpage-example.html?sellerId=${result.userId}"
-            //        class="btn btn-outline-primary rounded-square d-flex align-items-center justify-content-center"
-            //        style="width: 42px; height: 42px;"
-            //        aria-label="Chat"
-            //    >
-            //        <i class="bi bi-chat-dots fs-5"></i>
-            //    </a>
-            //`;
 
             const chatBtn = chatLinkContainer.querySelector("#chat-btn");
-            chatBtn.setAttribute("href", `../page-examples/chatpage-example.html?sellerId=${result.userId}`);
+            chatBtn.setAttribute("href", `/chatpage.html?sellerId=${result.userId}`);
             chatBtn?.classList.remove("d-none");
 
             const accountMenuResponse = await fetch("/Reusable-HTML/components/accountMenu.html");

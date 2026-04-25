@@ -78,7 +78,7 @@
         if (contactBtn) {
             contactBtn.addEventListener("click", () => {
                 // Redirect to the example chat page with sellerId query param.
-                window.location.href = `/page-examples/chatpage-example.html?sellerId=${post.seller_id}&postId=${post.id}`;
+                window.location.href = `/chatpage.html?sellerId=${post.seller_id}&postId=${post.id}`;
             });
         }
     };

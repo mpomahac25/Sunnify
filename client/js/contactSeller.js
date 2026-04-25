@@ -31,7 +31,7 @@ contactBtn?.addEventListener("click", async () => {
     
     const data = await res.json();
     if (res.ok) {
-        window.location.href = `/page-examples/chatpage-example.html?conversationId=${data.conversationId}&postId=${postId}`;
+        window.location.href = `/chatpage.html?conversationId=${data.conversationId}&postId=${postId}`;
     } else {
         alert(data.error || "Couldn't initiate chat.");
     }
