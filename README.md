@@ -222,7 +222,6 @@ Sunnify/
 |	|		└──	username.js
 |	|
 |	└── page-examples/		#Placeholder/template pages
-|		|	chatpage-example.html
 |		|	postpage-example.html
 |		└──	profilepage-example.html
 |

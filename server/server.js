@@ -68,6 +68,10 @@ app.get("/search", (req, res) => {
     res.sendFile(path.join(client, "searchpage.html"));
 });
 
+app.get("/chat", (req, res) => {
+    res.sendFile(path.join(client, "chatpage.html"));
+});
+
 //examples
 
 
@@ -77,10 +81,6 @@ app.get("/examples/profile", (req, res) => {
 
 app.get("/examples/post", (req, res) => {
     res.sendFile(path.join(client, "page-examples", "postpage-example.html"));
-});
-
-app.get("/examples/chat", (req, res) => {
-    res.sendFile(path.join(client, "page-examples", "chatpage-example.html"));
 });
 
 app.get("/components/carousel", (req, res) => {
