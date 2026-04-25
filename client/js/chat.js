@@ -71,41 +71,6 @@ async function loadConversations() {
     conversations = data.conversations.map(
         (conv) => new Conversation(conv.id, [conv.user1_id, conv.user2_id], [], conv.post_id),
     );
-    window.conversations = conversations;
-    showConversationsList();
-
-    if (conversationId) {
-        await selectConversation(conversationId);
-    } else if (sellerId && postId) {
-        if (Number(sellerId) === currentUser) {
-            console.log("Can't text yourself genius");
-            window.location.href = "/";
-            alert("You can't contact yourself dummy. Redirecting to homepage lol.");
-            return;
-        }
-
-        const found = conversations.find(
-            (conv) => conv.post_id == postId && conv.users.includes(Number(sellerId)),
-        );
-        if (found) {
-            await selectConversation(found.id);
-        } else {
-            const res = await fetch("/conversation/check-or-create", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                credentials: "include",
-                body: JSON.stringify({
-                    user1: currentUser,
-                    user2: Number(sellerId),
-                    postId: Number(postId),
-                }),
-            });
-            const data = await res.json();
-            if (res.ok && data.conversationId) {
-                await loadConversations();
-            }
-        }
-    }
 }
 
 // Search for the conversation with the given id in the conversations array
@@ -323,4 +288,50 @@ deleteBtn.addEventListener("click", async () => {
 (async function initChat() {
     await getCurrentUser();
     await loadConversations();
+
+    let selectedConvId = conversationId;
+
+    // Check if conversation needs to be created
+    if (!conversationId) {
+        // User can't message themselves
+        if (sellerId && postId && Number(sellerId) === currentUser) {
+            console.log("Can't text yourself genius");
+            window.location.href = "/";
+            alert("You can't contact yourself dummy. Redirecting to homepage lol.");
+            return;
+        }
+
+        const found = conversations.find(
+            (conv) => conv.post_id == postId && conv.users.includes(Number(sellerId)),
+        );
+
+        if (!found) {
+            // Attempt to create new conversation in DB
+            const res = await fetch("/conversation/check-or-create", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                credentials: "include",
+                body: JSON.stringify({
+                    user1: Number(currentUser),
+                    user2: Number(sellerId),
+                    postId: Number(postId),
+                }),
+            });
+            const data = await res.json();
+
+            // Add to conversations array
+            if (res.ok && data.conversation) {
+                const conv = data.conversation;
+                conversations.push(new Conversation(conv.id, [conv.user1_id, conv.user2_id], [], conv.post_id));
+                selectedConvId = conv.id;
+            }
+        }
+    }
+
+    // Render the conversations
+    console.log(conversations);
+    await showConversationsList();
+
+    // Select requested or created conversation
+    await selectConversation(selectedConvId);
 })();

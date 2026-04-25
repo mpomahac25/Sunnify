@@ -864,25 +864,25 @@ sunnifyRouter.post("/conversation/check-or-create", isUserAuthenticated, async (
 
         // Check if the conversation already exists between 2 users (in whatever order)
         const result = await query(
-            `SELECT id FROM conversations
+            `SELECT * FROM conversations
                 WHERE ((user1_id = $1 AND user2_id = $2) OR (user1_id = $2 AND user2_id = $1))
                 AND post_id = $3
                 LIMIT 1`,
             [user1, user2, postId],
         );
 
-        // If it exists, return the existing id
+        // If it exists, return the existing conversation
         if (result.rows.length > 0) {
-            return res.status(200).json({ conversationId: result.rows[0].id });
+            return res.status(200).json({ conversation: result.rows[0] });
         }
 
         // If it doesn't exist, create the conversation and return the new id
         const insertResult = await query(
-            `INSERT INTO conversations (user1_id, user2_id, post_id) VALUES ($1, $2, $3) RETURNING id`,
+            `INSERT INTO conversations (user1_id, user2_id, post_id) VALUES ($1, $2, $3) RETURNING id, user1_id, user2_id, post_id`,
             [user1, user2, postId],
         );
 
-        return res.status(201).json({ conversationId: insertResult.rows[0].id });
+        return res.status(201).json({ conversation: insertResult.rows[0] });
     } catch (error) {
         errorResponse(res, error);
     }
