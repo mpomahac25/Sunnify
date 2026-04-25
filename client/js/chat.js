@@ -2,7 +2,7 @@ import Message from "./Classes/message.js";
 import Conversation from "./Classes/conversation.js";
 
 // Constants
-const MESSAGE_POLLING_INTERVAL_MS = 1000;
+const MESSAGE_POLLING_INTERVAL_MS = 2000;
 
 // Define the variables that will hold the chat data
 let conversations = [];
@@ -27,10 +27,8 @@ const deleteCount = document.getElementById("deleteCount");
 const conversationsList = document.getElementById("conversationsList");
 
 // Message polling variables
-let runMessagePolling = true;
+let activePoller = null;
 let lastMessageId = 0;
-let timeoutId = null;
-const messagePolls = new Map();
 
 // HELPER FUNCTIONS
 
@@ -111,7 +109,7 @@ async function selectConversation(conversation = null) {
         console.log(conversation);
 
         // Show messages
-        showMsg();
+        //showMsg();
     } else {
         // TODO: Select first in rendered list
         console.log("No conversation selected");
@@ -230,14 +228,16 @@ async function sendMsg(text) {
         console.log("There is no conversation selected");
         return;
     }
+
     const res = await fetch(`/conversations/${currentConversation.convObj.id}/messages`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({ text }),
     });
+
     if (res.ok) {
-        await selectConversation(currentConversation);
+        startPollingMessages(currentConversation.convObj.id);
     }
     else {
         console.error(`Failed to put message in database. HTTP ${res.status}`);
@@ -305,8 +305,8 @@ deleteBtn.addEventListener("click", async () => {
 
 
 // Continuous message polling
-const pollMessages = async (convId) => {
-    while (runMessagePolling) {
+const pollMessages = async (convId, poller) => {
+    while (!poller.stopped) {
         try {
             const res = await fetch(`/conversations/${convId}/messages?afterId=${lastMessageId}`);
 
@@ -323,64 +323,54 @@ const pollMessages = async (convId) => {
 
                 // Add messages to conversation list in order
                 const conversation = conversations.find(conv => conv.convObj.id === convId);
-                newMessages.forEach(msg => conversation.messages.push(msg));
-
-                // Refresh displayed messages
-                showMsg();
+                newMessages.forEach(msg => {
+                    if (!conversation.messages.some(m => m.id === msg.id)) {
+                        conversation.messages.push(msg);
+                    }
+                });
             }
+
+            // Refresh displayed messages
+            showMsg();
         } catch (error) {
             console.error(`Message polling failed for conversation with ID ${convId}: `, error);
         }
 
         // Wait before next poll attempt
         await new Promise(resolve => {
-            timeoutId = setTimeout(resolve, MESSAGE_POLLING_INTERVAL_MS);
+            poller.resolveFn = resolve;
+            poller.timeoutId = setTimeout(resolve, MESSAGE_POLLING_INTERVAL_MS);
         });
     }
 };
 
 const startPollingMessages = (convId) => {
-    // Stop all previous pollers
-    console.log("Stopping message polling");
+    // Stop previous poller
     stopPollingMessages();
-    console.log("Message polling stopped");
+
+    // Reset poller
+    activePoller = {
+        stopped: false,
+        resolveFn: null,
+        timeoutId: null
+    };
 
     // Start asnychronous loop
     console.log("Starting new polling loop");
-    runMessagePolling = true;
-    pollMessages(convId);
+    pollMessages(convId, activePoller);
     console.log("Polling loop started");
-
-    // Create a stop function for polling convId
-    messagePolls.set(convId, {
-        stop() {
-            // Stop the loop
-            runMessagePolling = false;
-            // Cancel any ongoing sleep
-            if (timeoutId) clearTimeout(timeoutId);
-        }
-    });
 };
 
-const stopPollingMessages = (convId = 0) => {
-    console.log("Stopping message polling");
-    // If convId is 0, stop all pollers; should only be 1 poller active, but just in case
-    if (convId === 0) {
-        messagePolls.forEach(poll => {
-            poll.stop();
-        });
-        messagePolls.clear();
-        return;
-    }
-
-    // Try to fetch poller
-    const poll = messagePolls.get(convId);
-
-    // Stop polling if poller found
-    if (poll) {
-        poll.stop();
-        // When stopped, delete from map
-        messagePolls.delete(convId);
+const stopPollingMessages = () => {
+    if (activePoller) {
+        console.log("Stopping message polling");
+        activePoller.stopped = true;
+        if (activePoller.timeoutId) clearTimeout(activePoller.timeoutId);
+        const resolveFn = activePoller.resolveFn;
+        activePoller.resolveFn = null;
+        resolveFn();
+        activePoller = null;
+        console.log("Message polling stopped");
     }
 };
 
@@ -406,7 +396,7 @@ const stopPollingMessages = (convId = 0) => {
 
         const found = conversations.find(
             (conv) =>
-                conv.convObj.post_id == postId &&
+                conv.convObj.postId == postId &&
                 conv.convObj.users.includes(Number(sellerId))
         );
         selectedConv = found;
