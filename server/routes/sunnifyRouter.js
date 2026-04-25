@@ -133,7 +133,7 @@ sunnifyRouter.post("/logout", (req, res) => {
 // Simple endpoint that returns `{ loggedIn: true, userId }` when a session exists.
 // Used by frontend to know whether the browser is authenticated.
 sunnifyRouter.get("/check-session", (req, res) => {
-    if (req.session.userId) res.status(200).json({ loggedIn: true, userId: req.session.userId });
+    if (req.session.userId) res.status(200).json({ loggedIn: true, userId: req.session.userId, username: req.session.username });
     else res.status(200).json({ loggedIn: false, userId: null });
 });
 
@@ -825,15 +825,47 @@ sunnifyRouter.get("/conversations", isUserAuthenticated, async (req, res) => {
         const sessionUser = req.session.userId;
 
         // Search for all the conversations where the user is participating
-        const result = await query(
-            `SELECT * FROM conversations
-            WHERE user1_id = $1 OR user2_id = $1
-            ORDER BY id DESC`,
-            [sessionUser],
+        let result = await query(
+            `
+            SELECT
+                c.id, c.user1_id AS "buyerId", c.user2_id AS "sellerId", c.post_id AS "postId",
+                u1.username AS "buyer", u2.username AS "seller",
+                p.title AS "postTitle", p.price AS "postPrice",
+                ARRAY(
+                    SELECT image_url FROM post_images WHERE post_id = c.post_id
+                ) AS "postImages"
+            FROM conversations c
+            JOIN users u1 ON c.user1_id = u1.id
+            JOIN users u2 ON c.user2_id = u2.id
+            JOIN posts p ON c.post_id = p.id
+            WHERE c.user1_id = $1 OR c.user2_id = $1
+            ORDER BY c.id DESC;
+            `,
+            [sessionUser]
         );
 
+        const conversations = result.rows;
+
+        // Fetch messages
+        result = await query("SELECT * FROM messages");
+        const allMessages = result.rows;
+
+        // Group messages by conversation ID
+        const messagesByConversationId = {};
+
+        allMessages.forEach(msg => {
+            if (!messagesByConversationId[msg.conversation_id]) {
+                messagesByConversationId[msg.conversation_id] = [];
+            }
+            messagesByConversationId[msg.conversation_id].push(msg);
+        });
+
+        // Append messages to conversations
+        conversations.forEach(conv => conv.messages = messagesByConversationId[conv.id] || [])
+        console.log(conversations);
+
         // Return the array of conversations with status 200 (OK)
-        return res.status(200).json({ conversations: result.rows });
+        return res.status(200).json({ conversations });
     } catch (error) {
         errorResponse(res, error);
     }
@@ -864,25 +896,62 @@ sunnifyRouter.post("/conversation/check-or-create", isUserAuthenticated, async (
 
         // Check if the conversation already exists between 2 users (in whatever order)
         const result = await query(
-            `SELECT * FROM conversations
-                WHERE ((user1_id = $1 AND user2_id = $2) OR (user1_id = $2 AND user2_id = $1))
-                AND post_id = $3
-                LIMIT 1`,
-            [user1, user2, postId],
+            `
+            SELECT
+                c.id, c.user1_id AS "buyerId", c.user2_id AS "sellerId", c.post_id AS "postId",
+                u1.username AS "buyer", u2.username AS "seller",
+                p.title AS "postTitle", p.price AS "postPrice",
+                ARRAY(
+                    SELECT image_url FROM post_images WHERE post_id = c.post_id
+                ) AS "postImages"
+            FROM conversations c
+            JOIN users u1 ON c.user1_id = u1.id
+            JOIN users u2 ON c.user2_id = u2.id
+            JOIN posts p ON c.post_id = p.id
+            WHERE
+                ((c.user1_id = $1 AND c.user2_id = $2) OR (c.user1_id = $2 AND c.user2_id = $1))
+                AND c.post_id = $3
+            LIMIT 1
+            `,
+            [user1, user2, postId]
         );
 
         // If it exists, return the existing conversation
         if (result.rows.length > 0) {
-            return res.status(200).json({ conversation: result.rows[0] });
+            const conversation = result.rows[0];
+
+            // Load messages for the conversation
+            conversation.messages = (await query("SELECT * FROM messages WHERE conversation_id = $1", [conversation.id])).rows;
+
+            return res.status(200).json({ conversation });
         }
 
         // If it doesn't exist, create the conversation and return the new id
         const insertResult = await query(
-            `INSERT INTO conversations (user1_id, user2_id, post_id) VALUES ($1, $2, $3) RETURNING id, user1_id, user2_id, post_id`,
-            [user1, user2, postId],
+            `
+            WITH c AS (
+                INSERT INTO conversations (user1_id, user2_id, post_id) VALUES ($1, $2, $3)
+                RETURNING id, user1_id, user2_id, post_id
+            )
+            SELECT
+                c.id, c.user1_id AS "buyerId", c.user2_id AS "sellerId", c.post_id AS "postId",
+                u1.username AS "buyer", u2.username AS "seller",
+                p.title AS "postTitle", p.price AS "postPrice",
+                ARRAY(
+                    SELECT image_url FROM post_images WHERE post_id = c.post_id
+                ) AS "postImages"
+            FROM c
+            JOIN users u1 ON c.user1_id = u1.id
+            JOIN users u2 ON c.user2_id = u2.id
+            JOIN posts p ON c.post_id = p.id
+            `,
+            [user1, user2, postId]
         );
 
-        return res.status(201).json({ conversation: insertResult.rows[0] });
+        const conversation = insertResult.rows[0];
+        conversation.messages = [];
+
+        return res.status(201).json({ conversation });
     } catch (error) {
         errorResponse(res, error);
     }
@@ -894,6 +963,7 @@ sunnifyRouter.get("/conversations/:id/messages", isUserAuthenticated, async (req
     try {
         // Take the conversation id and the authenticated user
         const conversationID = Number(req.params.id);
+        const afterId = Number(req.query.afterId || 0);
         const sessionUser = req.session.userId;
 
         // Validate the conversation id is a number
@@ -917,10 +987,12 @@ sunnifyRouter.get("/conversations/:id/messages", isUserAuthenticated, async (req
 
         // Consults the messages of the conversation and returns them ordered by sent_at
         const messagesFromConv = await query(
-            `SELECT * FROM messages
-        WHERE conversation_id = $1
-        ORDER BY sent_at ASC`,
-            [conversationID],
+            `
+            SELECT * FROM messages
+            WHERE conversation_id = $1 AND id > $2
+            ORDER BY sent_at ASC
+            `,
+            [conversationID, afterId]
         );
         // Returns the messages in JSON format with status 200 (OK)
         return res.status(200).json({ messages: messagesFromConv.rows });

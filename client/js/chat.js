@@ -1,10 +1,14 @@
 import Message from "./Classes/message.js";
 import Conversation from "./Classes/conversation.js";
 
+// Constants
+const MESSAGE_POLLING_INTERVAL_MS = 1000;
+
 // Define the variables that will hold the chat data
 let conversations = [];
 let currentConversation = null;
-let currentUser = null;
+let currentUserId = null;
+let currentUsername = null;
 
 const urlParams = new URLSearchParams(window.location.search);
 const conversationId = urlParams.get("conversationId");
@@ -13,7 +17,7 @@ const sellerId = urlParams.get("sellerId");
 
 // Global variables to make it easier to access the data from the console for debugging
 window.conversations = conversations;
-window.currentUser = currentUser;
+window.currentUser = currentUserId;
 window.currentConversation = currentConversation;
 
 // Delete stuff
@@ -22,19 +26,20 @@ const deleteBtn = document.getElementById("deleteConversationsBtn");
 const deleteCount = document.getElementById("deleteCount");
 const conversationsList = document.getElementById("conversationsList");
 
+// Message polling variables
+let runMessagePolling = true;
+let lastMessageId = 0;
+let timeoutId = null;
+const messagePolls = new Map();
+
 // HELPER FUNCTIONS
 
 // Helper function to update the product header
-function updateProductHeader(postId) {
-    fetch(`/posts/${postId}`)
-        .then((res) => res.json())
-        .then((post) => {
-            document.getElementById("chatProductTitle").textContent = post.title || "";
-            document.getElementById("chatProductPrice").textContent = post.price
-                ? post.price + "€"
-                : "";
-            document.getElementById("chatProductModel").textContent = post.model || "";
-        });
+function updateProductHeader(conversation) {
+    document.getElementById("chatProductTitle").textContent = conversation.postTitle || "";
+    document.getElementById("chatProductPrice").textContent = conversation.postPrice
+        ? conversation.postPrice + "€"
+        : "";
 }
 
 // Format the date to show only the time in a more readable format
@@ -48,8 +53,9 @@ function formatTime(dateString) {
 async function getCurrentUser() {
     const res = await fetch("/check-session", { credentials: "include" });
     const data = await res.json();
-    currentUser = data.userId;
-    window.currentUser = currentUser;
+    currentUserId = data.userId;
+    currentUsername = data.username;
+    window.currentUser = currentUserId;
 }
 
 function updateDeleteButton() {
@@ -62,42 +68,53 @@ function updateDeleteButton() {
     }
 }
 
+function addConversationToArray(conv) {
+    if (conv) {
+        conversations.push({
+            convObj: new Conversation(conv.id, [conv.buyerId, conv.sellerId], [], conv.postId),
+            buyer: conv.buyer,
+            buyerId: conv.buyerId,
+            seller: conv.seller,
+            sellerId: conv.sellerId,
+            postTitle: conv.postTitle,
+            postPrice: conv.postPrice,
+            postImages: conv.postImages,
+            messages: conv.messages
+        });
+    }
+}
+
 // MAIN FUNCTIONS
 
 // Load conversations from the backend
 async function loadConversations() {
     const res = await fetch("/conversations", { credentials: "include" });
     const data = await res.json();
-    conversations = data.conversations.map(
-        (conv) => new Conversation(conv.id, [conv.user1_id, conv.user2_id], [], conv.post_id),
-    );
+    conversations = [];
+    data.conversations.forEach(conv => addConversationToArray(conv));
 }
 
 // Search for the conversation with the given id in the conversations array
-async function selectConversation(id) {
-    const found = conversations.find((conv) => Number(conv.id) === Number(id));
-    if (found) {
-        currentConversation = found;
+async function selectConversation(conversation = null) {
+    if (conversation) {
+        // Set lastMessageId
+        lastMessageId = conversation.messages[conversation.messages.length - 1]?.id || 0;
+        console.log(lastMessageId);
+
+        // Start polling loop
+        startPollingMessages(conversation.convObj.id);
+
+        currentConversation = conversation;
         window.currentConversation = currentConversation;
         // Update the product header when selecting a conversation
-        updateProductHeader(found.post_id);
-        // Load messages for the selected conversation from the backend
-        const res = await fetch(`/conversations/${id}/messages`, { credentials: "include" });
-        const data = await res.json();
-        currentConversation.messages = data.messages.map(
-            (msg) =>
-                new Message(
-                    msg.id,
-                    msg.content,
-                    msg.sent_at,
-                    msg.sender_id,
-                    msg.receiver_id,
-                    msg.conversation_id,
-                ),
-        );
+        updateProductHeader(conversation);
+        console.log(conversation);
+
+        // Show messages
         showMsg();
     } else {
-        console.log("No conversation found with that id");
+        // TODO: Select first in rendered list
+        console.log("No conversation selected");
     }
 }
 
@@ -110,32 +127,30 @@ async function showConversationsList() {
     console.log("Total conversations:", conversations.length);
 
     for (const conversation of conversations) {
-        const otherUserId = conversation.users.find((id) => id !== currentUser);
-        console.log("Other user id:", otherUserId, `current user:`, currentUser);
+        const convObj = conversation.convObj;
+        const seller = conversation.seller;
+        const buyer = conversation.buyer;
+        const postTitle = conversation.postTitle;
 
-        if (!otherUserId || !conversation.post_id) {
-            console.log("Skipping conversation:", conversation.id);
+        const otherUserId = convObj.users.find((id) => id !== currentUserId);
+        console.log("Other user id:", otherUserId, `current user:`, currentUserId);
+
+        if (!otherUserId || !convObj.postId) {
+            console.log("Skipping conversation:", convObj.id);
             continue;
         }
-
-        // Fetch user and post data
-        const userRes = await fetch(`/users/${otherUserId}`);
-        const postRes = await fetch(`/posts/${conversation.post_id}`);
-
-        const userData = await userRes.json();
-        const postData = await postRes.json();
 
         // Create button
         const btn = document.createElement("button");
         btn.className = "conversation-btn";
-        btn.dataset.conversationId = conversation.id;
+        btn.dataset.conversationId = convObj.id;
         btn.type = "button";
 
         // Checkbox
         const checkbox = document.createElement("input");
         checkbox.type = "checkbox";
         checkbox.className = "conversation-checkbox";
-        checkbox.dataset.conversationId = conversation.id;
+        checkbox.dataset.conversationId = convObj.id;
         checkbox.tabIndex = 0;
         checkbox.addEventListener("change", (event) => {
             event.stopPropagation();
@@ -163,12 +178,15 @@ async function showConversationsList() {
         // Title
         const title = document.createElement("span");
         title.className = "fw-semibold";
-        title.textContent = postData.title || "Product";
+        title.textContent = postTitle || "Product";
 
         // User
         const user = document.createElement("span");
         user.className = "text-muted small";
-        user.textContent = "with " + (userData.username || "User");
+        const otherUser = conversation.sellerId === currentUserId
+            ? buyer
+            : seller;
+        user.textContent = "with " + (otherUser || "User");
 
         // Append text to container
         textContainer.appendChild(title);
@@ -181,7 +199,7 @@ async function showConversationsList() {
         // Click para seleccionar conversación
         btn.addEventListener("click", (event) => {
             if (event.target !== checkbox) {
-                selectConversation(conversation.id);
+                selectConversation(conversation);
             }
         });
 
@@ -198,7 +216,7 @@ function showMsg() {
     if (!currentConversation) return;
 
     currentConversation.messages.forEach((msg) => {
-        const isSent = msg.sender_id == currentUser;
+        const isSent = msg.sender_id == currentUserId;
         const article = document.createElement("article");
         article.className = isSent ? "message-sent" : "message-received";
         article.innerHTML = `<div class="message-text">${msg.text || msg.content}</div><div class="message-time">${formatTime(msg.date || msg.sent_at)}</div>`;
@@ -212,14 +230,17 @@ async function sendMsg(text) {
         console.log("There is no conversation selected");
         return;
     }
-    const res = await fetch(`/conversations/${currentConversation.id}/messages`, {
+    const res = await fetch(`/conversations/${currentConversation.convObj.id}/messages`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({ text }),
     });
     if (res.ok) {
-        await selectConversation(currentConversation.id);
+        await selectConversation(currentConversation);
+    }
+    else {
+        console.error(`Failed to put message in database. HTTP ${res.status}`);
     }
 }
 
@@ -282,6 +303,88 @@ deleteBtn.addEventListener("click", async () => {
     await deleteSelectedConversations();
 });
 
+
+// Continuous message polling
+const pollMessages = async (convId) => {
+    while (runMessagePolling) {
+        try {
+            const res = await fetch(`/conversations/${convId}/messages?afterId=${lastMessageId}`);
+
+            if (!res.ok) {
+                throw new Error(`Error fetching messages; HTTP ${res.status}`);
+            }
+
+            const data = await res.json();
+            const newMessages = data.messages || [];
+
+            if (newMessages.length > 0) {
+                // Set new lastMessageId
+                lastMessageId = newMessages[newMessages.length - 1].id;
+
+                // Add messages to conversation list in order
+                const conversation = conversations.find(conv => conv.convObj.id === convId);
+                newMessages.forEach(msg => conversation.messages.push(msg));
+
+                // Refresh displayed messages
+                showMsg();
+            }
+        } catch (error) {
+            console.error(`Message polling failed for conversation with ID ${convId}: `, error);
+        }
+
+        // Wait before next poll attempt
+        await new Promise(resolve => {
+            timeoutId = setTimeout(resolve, MESSAGE_POLLING_INTERVAL_MS);
+        });
+    }
+};
+
+const startPollingMessages = (convId) => {
+    // Stop all previous pollers
+    console.log("Stopping message polling");
+    stopPollingMessages();
+    console.log("Message polling stopped");
+
+    // Start asnychronous loop
+    console.log("Starting new polling loop");
+    runMessagePolling = true;
+    pollMessages(convId);
+    console.log("Polling loop started");
+
+    // Create a stop function for polling convId
+    messagePolls.set(convId, {
+        stop() {
+            // Stop the loop
+            runMessagePolling = false;
+            // Cancel any ongoing sleep
+            if (timeoutId) clearTimeout(timeoutId);
+        }
+    });
+};
+
+const stopPollingMessages = (convId = 0) => {
+    console.log("Stopping message polling");
+    // If convId is 0, stop all pollers; should only be 1 poller active, but just in case
+    if (convId === 0) {
+        messagePolls.forEach(poll => {
+            poll.stop();
+        });
+        messagePolls.clear();
+        return;
+    }
+
+    // Try to fetch poller
+    const poll = messagePolls.get(convId);
+
+    // Stop polling if poller found
+    if (poll) {
+        poll.stop();
+        // When stopped, delete from map
+        messagePolls.delete(convId);
+    }
+};
+
+
 // INITIALIZATION
 
 // Initialize the chat by loading the current user and conversations
@@ -289,12 +392,12 @@ deleteBtn.addEventListener("click", async () => {
     await getCurrentUser();
     await loadConversations();
 
-    let selectedConvId = conversationId;
+    let selectedConv = null;
 
     // Check if conversation needs to be created
     if (!conversationId) {
         // User can't message themselves
-        if (sellerId && postId && Number(sellerId) === currentUser) {
+        if (sellerId && postId && Number(sellerId) === currentUserId) {
             console.log("Can't text yourself genius");
             window.location.href = "/";
             alert("You can't contact yourself dummy. Redirecting to homepage lol.");
@@ -302,17 +405,20 @@ deleteBtn.addEventListener("click", async () => {
         }
 
         const found = conversations.find(
-            (conv) => conv.post_id == postId && conv.users.includes(Number(sellerId)),
+            (conv) =>
+                conv.convObj.post_id == postId &&
+                conv.convObj.users.includes(Number(sellerId))
         );
+        selectedConv = found;
 
-        if (!found) {
+        if (!found && sellerId && postId) {
             // Attempt to create new conversation in DB
             const res = await fetch("/conversation/check-or-create", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 credentials: "include",
                 body: JSON.stringify({
-                    user1: Number(currentUser),
+                    user1: Number(currentUserId),
                     user2: Number(sellerId),
                     postId: Number(postId),
                 }),
@@ -322,8 +428,8 @@ deleteBtn.addEventListener("click", async () => {
             // Add to conversations array
             if (res.ok && data.conversation) {
                 const conv = data.conversation;
-                conversations.push(new Conversation(conv.id, [conv.user1_id, conv.user2_id], [], conv.post_id));
-                selectedConvId = conv.id;
+                addConversationToArray(conv);
+                selectedConv = conv;
             }
         }
     }
@@ -333,5 +439,5 @@ deleteBtn.addEventListener("click", async () => {
     await showConversationsList();
 
     // Select requested or created conversation
-    await selectConversation(selectedConvId);
+    await selectConversation(selectedConv);
 })();

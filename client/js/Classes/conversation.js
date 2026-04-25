@@ -7,7 +7,7 @@ class Conversation {
         this.id = id;
         this.users = users;
         this.messages = messages;
-        this.post_id = post_id;
+        this.postId = post_id;
     }
 
     // Function to add a message to the conversation
