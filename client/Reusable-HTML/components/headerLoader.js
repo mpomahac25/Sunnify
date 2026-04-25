@@ -43,7 +43,11 @@ document.addEventListener("DOMContentLoaded", async () => {
             const profileSavedItemsLink = container.querySelector("#view-profile-saved-items-link");
             profileSavedItemsLink?.setAttribute("href", `/profile.html?id=${result.userId}#saved-items`);
 
-            //saved items btn
+            //listings btn
+            const profileListingsLink = container.querySelector("#view-profile-listings-link");
+            profileListingsLink?.setAttribute("href", `/profile.html?id=${result.userId}#listings`);
+
+            //settings btn
             const profileSettingsLink = container.querySelector("#view-profile-settings-link");
             profileSettingsLink?.setAttribute("href", `/profile.html?id=${result.userId}#settings`);
 
