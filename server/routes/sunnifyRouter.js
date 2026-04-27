@@ -921,7 +921,7 @@ sunnifyRouter.post("/conversation/check-or-create", isUserAuthenticated, async (
             const conversation = result.rows[0];
 
             // Load messages for the conversation
-            conversation.messages = (await query("SELECT * FROM messages WHERE conversation_id = $1", [conversation.id])).rows;
+            conversation.messages = (await query("SELECT * FROM messages WHERE conversation_id = $1", [conversation.id])).rows || [];
 
             return res.status(200).json({ conversation });
         }

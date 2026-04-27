@@ -77,7 +77,7 @@ function addConversationToArray(conv) {
             postTitle: conv.postTitle,
             postPrice: conv.postPrice,
             postImages: conv.postImages,
-            messages: conv.messages
+            messages: conv.messages || []
         });
     }
 }
@@ -96,8 +96,7 @@ async function loadConversations() {
 async function selectConversation(conversation = null) {
     if (conversation) {
         // Set lastMessageId
-        // lastMessageId = conversation.messages[conversation.messages.length - 1]?.id || 0;
-        lastMessageId = (conversation.messages?.[conversation.messages.length - 1]?.id) || 0;
+        lastMessageId = conversation.messages[conversation.messages.length - 1]?.id || 0;
         console.log(lastMessageId);
 
         // Start polling loop
@@ -125,6 +124,8 @@ async function showConversationsList() {
     listEl.innerHTML = "";
 
     console.log("Total conversations:", conversations.length);
+
+
 
     for (const conversation of conversations) {
         const convObj = conversation.convObj;
@@ -263,16 +264,15 @@ async function deleteSelectedConversations() {
             currentConversation = null;
             window.currentConversation = currentConversation;
 
+            // Stop polling messages (good catch here Anas)
             stopPollingMessages();
+
             // Load conversations again to refresh the list
-            const res2 = await fetch("/conversations", { credentials: "include" });
-            const data = await res2.json();
-            conversations = data.conversations.map(
-                (conv) =>
-                    new Conversation(conv.id, [conv.user1_id, conv.user2_id], [], conv.post_id),
-            );
+            await loadConversations();
+
             window.conversations = conversations;
             showConversationsList();
+
             // Clean the messages on the screen
             document.getElementById("messagesListEl").innerHTML = "";
             document.getElementById("chatProductTitle").textContent = "";
