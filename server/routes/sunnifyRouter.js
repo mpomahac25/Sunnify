@@ -919,6 +919,27 @@ sunnifyRouter.post("/search-results", async (req, res) => {
         const result = await query(sql, queryParams);
         const posts = result.rows;
 
+        // Fetch images for carousel
+        const postIds = posts.map((p) => p.id);
+
+        const imagesResult = await query(
+            `
+        SELECT id, post_id, image_url
+        FROM post_images
+        WHERE post_id = ANY($1)
+        ORDER BY id ASC
+        `,
+            [postIds],
+        );
+        const imagesByPostId = {};
+        for (const img of imagesResult.rows) {
+            if (!imagesByPostId[img.post_id]) imagesByPostId[img.post_id] = [];
+            imagesByPostId[img.post_id].push(img);
+        }
+        for (const post of posts) {
+            post.images = imagesByPostId[post.id] || [];
+        }
+
         // Filter (and optionally sort) by relevancy
         const filteredPosts = filterAndSortPostsByRelevancy(posts, searchObject);
 

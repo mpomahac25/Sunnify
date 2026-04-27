@@ -302,14 +302,9 @@ const renderResults = async (results) => {
     }
 
     results.forEach((result) => {
-        const postCardData = {
-            id: result.id,
-            title: result.title,
-            price: result.price,
-            location: buildPostLocationText(result),
-        };
+        result.location = buildPostLocationText(result);
 
-        const cardColumn = createPostCard(postCardData, {
+        const cardColumn = createPostCard(result, {
             columnClassName: "col-12 col-sm-6 col-lg-4",
             showFavoriteButton: true,
         });
