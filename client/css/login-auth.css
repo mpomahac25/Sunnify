@@ -109,4 +109,5 @@ span.auth-error {
     background: transparent;
     border: 0;
     visibility: hidden;
+    white-space: pre-wrap;
 }
