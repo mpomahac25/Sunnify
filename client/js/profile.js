@@ -1,4 +1,7 @@
 import { createPostCard } from "../Reusable-HTML/components/postCard.js";
+import { usernameValidators } from "./validation/username.js";
+import { passwordValidators } from "./validation/password.js";
+import { emailValidators } from "./validation/email.js";
 
 (() => {
     let pendingDeletePostId = null;
@@ -374,6 +377,18 @@ import { createPostCard } from "../Reusable-HTML/components/postCard.js";
                 newPasswordInput.value = "";
             }
 
+            usernameInput?.addEventListener("input", () => {
+                validateSettingsUsername(usernameInput.value.trim());
+            });
+
+            emailInput?.addEventListener("input", () => {
+                validateSettingsEmail(emailInput.value.trim());
+            });
+
+            newPasswordInput?.addEventListener("input", () => {
+                validateSettingsNewPassword(newPasswordInput.value);
+            });
+
             cancelBtn?.addEventListener("click", () => {
                 settingsContainer.innerHTML = "";
             });
@@ -404,18 +419,16 @@ import { createPostCard } from "../Reusable-HTML/components/postCard.js";
         const emailChanged = email !== currentSettings.email;
         const passwordChanged = newPassword.trim() !== "";
 
+        const usernameValid = validateSettingsUsername(username);
+        const emailValid = validateSettingsEmail(email);
+        const passwordValid = validateSettingsNewPassword(newPassword);
+
+        if (!usernameValid || !emailValid || !passwordValid) {
+            return;
+        }
+
         if (!usernameChanged && !emailChanged && !passwordChanged) {
             alert("No changes to apply.");
-            return;
-        }
-
-        if (!username) {
-            alert("Username cannot be empty.");
-            return;
-        }
-
-        if (!email || !email.includes("@")) {
-            alert("Please enter a valid email.");
             return;
         }
 
@@ -446,24 +459,166 @@ import { createPostCard } from "../Reusable-HTML/components/postCard.js";
     };
 
     const showSettingsPasswordError = (message) => {
-        const passwordError = document.getElementById("settings-confirm-error");
+        const passwordInput = document.getElementById("settings-confirm-password");
+        const passwordSpan = document.getElementById("confirm-password-span");
 
-        if (!passwordError) {
+        if (!passwordInput || !passwordSpan) {
             return;
         }
 
-        passwordError.textContent = message;
-        passwordError.classList.remove("d-none");
+        displaySettingsInputError(passwordInput, passwordSpan, message);
     };
 
     const hideSettingsPasswordError = () => {
-        const passwordError = document.getElementById("settings-confirm-error");
+        const passwordInput = document.getElementById("settings-confirm-password");
+        const passwordSpan = document.getElementById("confirm-password-span");
 
-        if (!passwordError) {
+        if (!passwordInput || !passwordSpan) {
             return;
         }
 
-        passwordError.textContent = "";
-        passwordError.classList.add("d-none");
+        hideSettingsInputError(passwordInput, passwordSpan);
+    };
+
+    const validateSettingsUsername = (username) => {
+        const usernameInput = document.getElementById("settings-username");
+        const usernameSpan = document.getElementById("settings-username-span");
+
+        if (!usernameInput || !usernameSpan) {
+            return false;
+        }
+
+        if (username === "") {
+            displaySettingsInputError(
+                usernameInput,
+                usernameSpan,
+                "Username cannot be empty!"
+            );
+
+            return false;
+        }
+
+        const errors = [];
+
+        usernameValidators.forEach((validator) => {
+            const error = validator(username);
+
+            if (error) {
+                errors.push(`- ${error}`);
+            }
+        });
+
+        if (errors.length > 0) {
+            displaySettingsInputError(
+                usernameInput,
+                usernameSpan,
+                `Username is invalid! Please fix the following:\n${errors.join("\n")}`
+            );
+
+            return false;
+        }
+
+        hideSettingsInputError(usernameInput, usernameSpan);
+        return true;
+    };
+
+    const validateSettingsEmail = (email) => {
+        const emailInput = document.getElementById("settings-email");
+        const emailSpan = document.getElementById("settings-email-span");
+
+        if (!emailInput || !emailSpan) {
+            return false;
+        }
+
+        if (email === "") {
+            displaySettingsInputError(
+                emailInput,
+                emailSpan,
+                "Email cannot be empty!"
+            );
+
+            return false;
+        }
+
+        const errors = [];
+
+        emailValidators.forEach((validator) => {
+            const error = validator(email);
+
+            if (error) {
+                errors.push(`- ${error}`);
+            }
+        });
+
+        if (errors.length > 0) {
+            displaySettingsInputError(
+                emailInput,
+                emailSpan,
+                `Email is invalid! Please fix the following:\n${errors.join("\n")}`
+            );
+
+            return false;
+        }
+
+        hideSettingsInputError(emailInput, emailSpan);
+        return true;
+    };
+
+    const validateSettingsNewPassword = (password) => {
+        const passwordInput = document.getElementById("settings-new-password");
+        const passwordSpan = document.getElementById("settings-new-password-span");
+
+        if (!passwordInput || !passwordSpan) {
+            return false;
+        }
+
+        /*
+            In settings, empty new password means:
+            "Do not change password"
+        */
+        if (password.trim() === "") {
+            hideSettingsInputError(passwordInput, passwordSpan);
+            return true;
+        }
+
+        const errors = [];
+
+        passwordValidators.forEach((validator) => {
+            const error = validator(password);
+
+            if (error) {
+                errors.push(`- ${error}`);
+            }
+        });
+
+        if (errors.length > 0) {
+            displaySettingsInputError(
+                passwordInput,
+                passwordSpan,
+                `Password is invalid! Please fix the following:\n${errors.join("\n")}`
+            );
+
+            return false;
+        }
+
+        hideSettingsInputError(passwordInput, passwordSpan);
+        return true;
+    };
+
+    const displaySettingsInputError = (inputField, errorSpan, message) => {
+        inputField.classList.add("auth-form_input_invalid");
+        inputField.classList.add("is-invalid");
+
+        errorSpan.style.visibility = "visible";
+        errorSpan.style.whiteSpace = "pre-line";
+        errorSpan.textContent = message;
+    };
+
+    const hideSettingsInputError = (inputField, errorSpan) => {
+        inputField.classList.remove("auth-form_input_invalid");
+        inputField.classList.remove("is-invalid");
+
+        errorSpan.style.visibility = "hidden";
+        errorSpan.textContent = "";
     };
 })();
