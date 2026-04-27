@@ -96,7 +96,8 @@ async function loadConversations() {
 async function selectConversation(conversation = null) {
     if (conversation) {
         // Set lastMessageId
-        lastMessageId = conversation.messages[conversation.messages.length - 1]?.id || 0;
+        // lastMessageId = conversation.messages[conversation.messages.length - 1]?.id || 0;
+        lastMessageId = (conversation.messages?.[conversation.messages.length - 1]?.id) || 0;
         console.log(lastMessageId);
 
         // Start polling loop
@@ -112,6 +113,7 @@ async function selectConversation(conversation = null) {
         //showMsg();
     } else {
         // TODO: Select first in rendered list
+        stopPollingMessages();
         console.log("No conversation selected");
     }
 }
@@ -236,7 +238,7 @@ async function sendMsg(text) {
         body: JSON.stringify({ text }),
     });
 
-    if (res.ok) {
+    if (res.ok && currentConversation) {  
         startPollingMessages(currentConversation.convObj.id);
     }
     else {
@@ -256,9 +258,12 @@ async function deleteSelectedConversations() {
         if (res.ok) {
             selectedConversations = [];
             updateDeleteButton();
+
             // Clean the current conversation if it was among the deleted ones
             currentConversation = null;
             window.currentConversation = currentConversation;
+
+            stopPollingMessages();
             // Load conversations again to refresh the list
             const res2 = await fetch("/conversations", { credentials: "include" });
             const data = await res2.json();
@@ -419,7 +424,7 @@ const stopPollingMessages = () => {
             if (res.ok && data.conversation) {
                 const conv = data.conversation;
                 addConversationToArray(conv);
-                selectedConv = conv;
+                selectedConv = conversations[conversations.length - 1]; // FIX: use wrapped object
             }
         }
     }
