@@ -685,6 +685,121 @@ sunnifyRouter.get("/users/:id/posts", async (req, res) => {
     }
 });
 
+// Fetch settings (username, email) for currently logged in user
+sunnifyRouter.get("/user/settings", isUserAuthenticated, async (req, res) => {
+    try {
+        const result = await query(
+            `
+            SELECT id, username, email
+            FROM users
+            WHERE id = $1
+            `,
+            [req.session.userId]
+        );
+
+        if (result.rows.length === 0) {
+            console.error(`User with ID ${req.session.userId} requested settings, but such user not found in database!`);
+            return res.status(404).json({ error: "User not found" });
+        }
+
+        res.status(200).json(result.rows[0]);
+    } catch (error) {
+        errorResponse(res, error);
+    }
+});
+
+// Update user settings in database
+sunnifyRouter.patch("/user/settings", isUserAuthenticated, async (req, res) => {
+    try {
+        const { username, email, newPassword, currentPassword } = req.body;
+
+        if (!currentPassword || !currentPassword.trim()) {
+            return res.status(400).json({ error: "Current password is required." });
+        }
+
+        const userResult = await query(
+            `
+            SELECT id, username, email, password_hash
+            FROM users
+            WHERE id = $1
+            `,
+            [req.session.userId]
+        );
+
+        if (userResult.rows.length === 0) {
+            console.error(`User with ID ${req.session.userId} requested settings update, but such user not found in database!`);
+            return res.status(404).json({ error: "User not found" });
+        }
+
+        const user = userResult.rows[0];
+        const passwordOk = await verifyPassword(currentPassword, user.password_hash);
+
+        if (!passwordOk) {
+            return res.status(401).json({ error: "Incorrect password." });
+        }
+
+        // Quick helper method for normalizing inputs
+        const normalizeStringInput = (inputString) => {
+            return typeof inputString === "string" ? inputString.trim() : null;
+        }
+
+        const normalizedUsername = normalizeStringInput(username) || user.username;
+        const normalizedEmail = normalizeStringInput(email) || user.email;
+        const normalizedNewPassword = normalizeStringInput(newPassword) || "";
+
+        if (!normalizedUsername) {
+            console.error(`Database contains empty username for userId ${req.session.userId}`);
+            return res.status(400).json({ error: "Username cannot be empty." });
+        }
+
+        if (!normalizedEmail || !normalizedEmail.includes("@")) {
+            return res.status(400).json({ error: "Invalid email." });
+        }
+
+        // Set to current pwHash in case pw is not being updated
+        let newPasswordHash = user.password_hash;
+
+        if (normalizedNewPassword) {
+            // TODO: Add proper backend password validation; for now relying on frontend validation
+
+            newPasswordHash = await encryptPassword(normalizedNewPassword);
+        }
+
+        const updateResult = await query(
+            `
+            UPDATE users
+            SET username = $1,
+                email = $2,
+                password_hash = $3
+            WHERE id = $4
+            RETURNING id, username, email
+            `,
+            [normalizedUsername, normalizedEmail, newPasswordHash, req.session.userId]
+        );
+
+        // Update session username field
+        req.session.username = updateResult.rows[0].username;
+
+        res.status(200).json(updateResult.rows[0]);
+    } catch (error) {
+        // PostgreSQL UNIQUE constraint violations
+        if (error.code === "23505") {
+            if (error.constraint?.includes("username")) {
+                return res.status(409).json({ error: "Username already exists." });
+            }
+
+            if (error.constraint?.includes("email")) {
+                return res.status(409).json({ error: "Email already in use." });
+            }
+
+            return res.status(409).json({ error: "Username or email already in use." });
+        }
+
+        errorResponse(res, error);
+    }
+});
+
+
 // Search System
 sunnifyRouter.post("/search-results", async (req, res) => {
     try {
